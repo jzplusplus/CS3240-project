@@ -1,0 +1,5 @@
+Parse input file and build regular expressions for all tokens: Ka Young
+Parse regular expressions and convert into NFA: Jordan
+Convert NFA into DFA: Chris
+Write table-walker and driver programs: Jay
+Bonus part: write NFA simulator: Ka Young
