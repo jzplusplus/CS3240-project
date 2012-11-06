@@ -28,4 +28,6 @@ public class State {
         return "State-" + instanceCounter;
     }
 
+    // TODO may need to override the equals method to compare names + acceptingness?
+
 }

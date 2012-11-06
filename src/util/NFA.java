@@ -1,5 +1,6 @@
 package util;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
@@ -43,6 +44,34 @@ public class NFA {
             }
         } 
         return epsilonClosure;
+
+    }
+
+    public static class NFABuilder {
+        
+        private State startState;
+        private Map<State, Map<Character, Set<State>>> transitionTable = new HashMap<State, Map<Character, Set<State>>>();
+        public NFABuilder() { }
+        public NFABuilder withStartState(State startState) {
+            this.startState = startState;
+            return this;
+        }
+
+        public NFABuilder withTransition(State original, Character input, State transition) {
+            if (!transitionTable.containsKey(original)) {
+                transitionTable.put(original, new HashMap<Character, Set<State>>());
+            }
+            if (!transitionTable.get(original).containsKey(input)) {
+                transitionTable.get(original).put(input, new HashSet<State>());
+            }
+
+            transitionTable.get(original).get(input).add(transition);
+            return this;
+        }
+
+        public NFA build() {
+            return new NFA(this.transitionTable, startState);
+        }
 
     }
 }

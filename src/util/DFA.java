@@ -3,10 +3,10 @@ package util;
 import java.util.Map;
 
 public class DFA {
-    private Map<State, Map<Character, State> transitionTable;
+    private Map<State, Map<Character, State>> transitionTable;
     private State currentState;
     private State startState;
-    public DFA(final Map<State, Map<Character, State> transitionTable, final State startState) {
+    public DFA(final Map<State, Map<Character, State>> transitionTable, final State startState) {
         this.transitionTable = transitionTable;
         this.currentState = startState;
         this.startState = startState;
