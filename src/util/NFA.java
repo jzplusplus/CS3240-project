@@ -12,9 +12,9 @@ public class NFA {
     public static final Character EPSILON = null;
 
     // we need two keys: a State and an input Character.
-    private Map<State, Map<Character, Set<State>>> transitionTable;
+    private Map<State, Map<Character, Set<State>>> transitionTable = new HashMap<State, Map<Character, Set<State>>>();
     private State startState;
-
+    public NFA() { }
     public NFA(final Map<State, Map<Character, Set<State>>> transitionTable, final State startState) {
         this.transitionTable = transitionTable;
         this.startState = startState;
@@ -47,31 +47,61 @@ public class NFA {
 
     }
 
-    public static class NFABuilder {
-        
-        private State startState;
-        private Map<State, Map<Character, Set<State>>> transitionTable = new HashMap<State, Map<Character, Set<State>>>();
-        public NFABuilder() { }
-        public NFABuilder withStartState(State startState) {
-            this.startState = startState;
-            return this;
-        }
-
-        public NFABuilder withTransition(State original, Character input, State transition) {
-            if (!transitionTable.containsKey(original)) {
-                transitionTable.put(original, new HashMap<Character, Set<State>>());
+    public Set<State> getAcceptStates() {
+        Set<State> acceptStates = new HashSet<State>();
+        for (State state : transitionTable.keySet()) {
+            if (state.isAccepting()) {
+                acceptStates.add(state);
             }
-            if (!transitionTable.get(original).containsKey(input)) {
-                transitionTable.get(original).put(input, new HashSet<State>());
-            }
+        }
+        return acceptStates;
+    }
 
-            transitionTable.get(original).get(input).add(transition);
-            return this;
+
+    public NFA withTransition(State original, Character input, State transition) {
+        if (!transitionTable.containsKey(original)) {
+            transitionTable.put(original, new HashMap<Character, Set<State>>());
+        }
+        if (!transitionTable.get(original).containsKey(input)) {
+            transitionTable.get(original).put(input, new HashSet<State>());
         }
 
-        public NFA build() {
-            return new NFA(this.transitionTable, startState);
-        }
+        transitionTable.get(original).get(input).add(transition);
+        return this;
+    }
 
+    public NFA withTransitions(Map<State, Map<Character, Set<State>>> transitions) {
+        transitionTable.putAll(transitions);
+        return this;
+    }
+
+    public static NFA union(NFA one, NFA two) {
+        NFA union = new NFA().withTransitions(one.transitionTable)
+                             .withTransitions(two.transitionTable);
+        union.startState = new State();
+        union.withTransition(union.startState, EPSILON, one.startState);
+        union.withTransition(union.startState, EPSILON, two.startState);
+        return union;
+    }
+
+    public static NFA concatenate(NFA one, NFA two) {
+        NFA concat = new NFA().withTransitions(one.transitionTable)
+                              .withTransitions(two.transitionTable);
+        concat.startState = one.startState;
+        for (State accept : one.getAcceptStates()) {
+            accept.setAccepting(false);
+            concat.withTransition(accept, EPSILON, two.startState);
+        }
+        return concat;
+    }
+
+    public static NFA kleeneStar(NFA one) {
+        NFA star = new NFA().withTransitions(one.transitionTable);
+        star.startState = new State(true);
+        star.withTransition(star.startState, EPSILON, one.startState);
+        for (State accept : one.getAcceptStates()) {
+            star.withTransition(accept, EPSILON, one.startState);
+        }
+        return star;
     }
 }

@@ -24,10 +24,26 @@ public class State {
         return this.name;
     }
 
+    public void setAccepting(boolean accepting) {
+        this.isAcceptingState = accepting;
+    }
+
     private static String generateName() {
         return "State-" + instanceCounter;
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof State) {
+            State other = (State) o;
+            return this.name.equals(other.name) && this.isAcceptingState == other.isAcceptingState;
+        }
+        return false;
+    }
 
-    // TODO may need to override the equals method to compare names + acceptingness?
+    @Override
+    public int hashCode() {
+        return this.name.hashCode() * 37 + (this.isAcceptingState ? 1 : 0);
+    }
 
 }
