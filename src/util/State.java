@@ -4,6 +4,10 @@ public class State {
     private static int instanceCounter = 0;
     private String name;
     private boolean isAcceptingState;
+
+    public State(State copy) {
+        this(copy.name, copy.isAcceptingState);
+    }
     public State() {
         this(generateName(), false);
     } 
