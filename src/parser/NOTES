@@ -1,0 +1,20 @@
+This package is for parsing input strings (from a text file) to tokens, and pass it to next steps as a stack (LinkedList).
+The parsing process is based on our project documents AND sample input and output files from the class resources.
+
+Currently working:
+	- It converts Strings to Tokens.
+	- File I(Input) works. 
+	
+Need to implement"
+	- Have to connect between File I and token conversion: simply pass an array from FileToList to Parser - did not have time.
+	- Have to handle letters: it only takes care of digits now.
+	- Want to simplify codes little more (decrease one or two classes)
+    - Want to show the result screen as our sample output (e.g. IDENTIFER 10 - currently it only shows 10)
+    
+
+I think I finished this parsing part more than 80%. I will finish this ASAP when I get time. 
+
+
+
+
+Question: What will be the best format to pass parsed data to the next step? Currently it passes a LinkedList(Stack - Recursion on Right Syntax Tree) of Strings.
