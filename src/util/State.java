@@ -6,18 +6,20 @@ public class State implements Comparable<State> {
     private boolean isAcceptingState;
 
     public State(State copy) {
-        this(copy.name, copy.isAcceptingState);
+        this(copy.name, copy.isAcceptingState, true);
     }
     public State() {
-        this(generateName(), false);
+        this(generateName(), false, false);
     } 
     public State(boolean isAcceptingState) {
-        this(generateName(), isAcceptingState);
+        this(generateName(), isAcceptingState, false);
     }
-    public State(String name, boolean isAcceptingState) {
+    public State(String name, boolean isAcceptingState, boolean isCopy) {
         this.name = name;
         this.isAcceptingState = isAcceptingState;
-        instanceCounter++;
+        if (!isCopy) {
+            instanceCounter++;
+        }
     }
 
     public boolean isAccepting() {
