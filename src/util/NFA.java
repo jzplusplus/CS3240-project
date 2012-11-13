@@ -105,8 +105,6 @@ public class NFA {
             if (!transitionTable.get(original).containsKey(input)) {
                 transitionTable.get(original).put(input, new HashSet<State>());
             }
-<<<<<<< HEAD
-=======
         }
     }
         
