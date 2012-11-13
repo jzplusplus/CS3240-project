@@ -1,6 +1,6 @@
 package util;
 
-public class State implements Comparable<State> {
+public class State {
     private static int instanceCounter = 0;
     private String name;
     private boolean isAcceptingState;
@@ -48,10 +48,6 @@ public class State implements Comparable<State> {
     @Override
     public int hashCode() {
         return this.name.hashCode() * 37 + (this.isAcceptingState ? 1 : 0);
-    }
-
-    public int compareTo(State o) {
-        return this.name.compareTo(o.name);
     }
 
 }

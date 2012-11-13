@@ -5,8 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import util.DFA;
-import util.DFA.DFABuilder;
+import util.DFA2;
 import util.NFA;
 import util.State;
 
@@ -17,21 +16,16 @@ public class NFAtoDFAtest {
 	 */
 	public static void main(String[] args) {
 		
+		State startState = new State();
 		
-		NFA nfa = createNFA();
+		NFA nfa = createNFA(startState);
 		
-		DFABuilder dfaBuilder = new DFABuilder(nfa);
+		DFA2 dfa = new DFA2(nfa, startState);
 		
-		DFA dfa = dfaBuilder.build();
-		
-		
-		
-		
-
 	}
 	
-	public static NFA createNFA() {
-		State state0 = new State();
+	public static NFA createNFA(State startState) {
+		State state0 = startState;
 		State state1 = new State();
 		State state2 = new State();
 		State state3 = new State();
