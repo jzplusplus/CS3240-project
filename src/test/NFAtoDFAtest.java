@@ -79,24 +79,53 @@ public class NFAtoDFAtest {
 		transitMap.put(s2, t2);
 		transitMap.put(s3, t3);
 		transitMap.put(s4, t4);
-				
-		// NFA nfa = createNFA(startState);
+		
 		NFA nfa = new NFA();
 		
 		nfa.withStartState(startState);
 		nfa.withTransitions(transitMap);
 		
-		Set<State> startEps = nfa.getEpsilonClosure(startState);
-		
-		for (State s : startEps) System.out.println(s.getName());
-		
 		DFA dfa = new DFA(nfa, startState);
 		// dfa.printTransitionTable();
-		
-		System.out.println("String Test");
+		System.out.println("DFA Test Case 1");
 		System.out.println("Grammar: aa* | bb*");
+		
+		System.out.println();
+		
+		System.out.println(dfa.toString());
+				
+		System.out.println();
+		
+		System.out.println("Test Strings:");
+		
 		System.out.println("Is 'aaa' legal? " + dfa.canAccept("aaa"));
-		System.out.println("Is 'aaa' legal? " + dfa.canAccept("aba"));
+		System.out.println("Is 'aba' legal? " + dfa.canAccept("aba"));
+		
+		System.out.println();
+		
+		
+		NFA a = NFA.acceptCharacter('a');
+		NFA b = NFA.acceptCharacter('b');
+		
+		NFA aOrb = NFA.union(a, b);
+		NFA aOrbStar = NFA.kleeneStar(aOrb);
+		
+		NFA ab = NFA.concatenate(a, b);
+		NFA abb = NFA.concatenate(ab, b);
+		
+		NFA nfa2 = NFA.concatenate(aOrbStar, abb);
+		
+		DFA dfa2 = new DFA(nfa2, nfa2.getStartState());
+		
+		System.out.println("DFA Test Case 2");
+		System.out.println("Grammar: (a|b)*abb");
+		
+		System.out.println();
+		
+		System.out.println(dfa2.toString());
+				
+		System.out.println();
+		
 		
 	}
 }

@@ -6,13 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * version 2
- * 
- * 
- * @author Chris
- *
- */
+
 public class DFA {
 
 	private Map<State, Map<Character, State>> transitionTable;
@@ -74,14 +68,8 @@ public class DFA {
 		
 		while (containsUnmarkedState(dfaStates)) {
 
-			System.out.println();
 			IntermediateState is = getUnmarkedState(dfaStates);
-			is.setMarker(false); // has been added to the table
-
-			System.out.println("Current intermediate state is " + is.getName());
-			System.out.println("The members are ");
-			for (State mem : is.getMemberStates()) System.out.println(mem.getName());
-			System.out.println();
+			is.setMarker(false); // indicates that has been added to the table and explored
 
 			for (Character input : characterSet) {
 				if (input!=null) {
@@ -110,26 +98,17 @@ public class DFA {
 						}
 
 						IntermediateState newIstate = convertToIntermediateState(epsTransitions);
-						for (State mem : newIstate.getMemberStates()) System.out.println(mem.getName());
-
+						
 						if (containsAsMember(dfaStates,epsTransitions)) {
-							System.out.println("State found: " + findTheState(dfaStates, epsTransitions).getName());
-							for (State mem : findTheState(dfaStates, epsTransitions).getMemberStates()) System.out.println(mem.getName());
 							is.addTransition(input, findTheState(dfaStates, epsTransitions));
-							System.out.println("Transitions on " + input.charValue());
-							System.out.println("have been added.");
+						
 						} else {
 							dfaStates.add(newIstate);
 							is.addTransition(input, newIstate);
-							System.out.println("Transitions on " + input.charValue());
-							for (State mem : newIstate.getMemberStates()) System.out.println(mem.getName());
-							System.out.println("have been added.");
-							System.out.println("New state name is: " + newIstate.getName());
 						}
 
 
 					} else { // if null, go to error state
-						System.out.println("transition to error state on " + input.charValue());
 						is.addTransition(input, errorState);
 					}
 
@@ -152,29 +131,12 @@ public class DFA {
 			for (Character input : characterSet) {
 				if (input!=null) {
 					transition.put(input, dfaArrList.get(isArrList.indexOf(iState.getTransition(input))));
-					// IntermediateState toIS = iState.getTransition(input);
-					/*
-					boolean added = false;
-					if (toIS!=null) {
-						State to = new State(toIS.isAccepting());
-						for (State s : transition.values()) {
-							if (s.equals(to)) { 
-								transition.put(input, to);
-								added = true;
-							}
-						}
-						if (!added) transition.put(input, to);	
-					}
-					*/
 				}
 			}
 			transitionTable.put(dfaArrList.get(isArrList.indexOf(iState)), transition);
 
 			if (iState.equals(dfaStartState)) startState = dfaArrList.get(isArrList.indexOf(iState));
-
 		}
-
-
 	} // end build
 
 
@@ -273,41 +235,11 @@ public class DFA {
 	 * @return true if a member; otherwise, false
 	 */
 	private boolean containsAsMember(Set<IntermediateState> iStates, Set<State> states) {
-		/*
-		int count = 0;
-		for (IntermediateState iState : iStates) {
-			count = 0;
-			for (State mem : iState.getMemberStates()) {
-				for (State s : states) {
-					if (s.equals(mem)) count++;
-				}
-			}
-			if (count==states.size()) return true;
-		}
-		return false;
-		*/
 		for (IntermediateState is : iStates) {
 			if (states.equals(is.getMemberStates())) return true;
 		}
 		return false;
 	}
-
-
-	/**
-	 * Checks if any of the states in the set is an accepting state.
-	 * If one of the states is accepting state, then the resulting DFA state
-	 * is also accepting state
-	 * 
-	 * @param states
-	 * @return
-	 */
-	private boolean containsAcceptingState(Set<State> states) {
-		for (State s : states) {
-			if (s.isAccepting()) return true;
-		}
-		return false;
-	}
-
 
 	public void printTransitionTable() {
 		System.out.println("The start state is " + startState.getName());
@@ -316,13 +248,36 @@ public class DFA {
 		for (State s : states) System.out.println("Name: " + s.getName() + "\nAccepting State? " + s.isAccepting());
 		System.out.println();
 		if (currentState!=startState) reset();
-		for (State s : transitionTable.keySet()) {
+		for (State s : states) {
 			System.out.println("From " + s.getName());
 			currentState = s;
 			for (Character c : transitionTable.get(s).keySet()) {
 				System.out.println("To " + doTransition(c).getName() + " on " + c.charValue());
 			}
 		}
+	}
+	
+	public String toString() {
+		String table2str = "";
+		
+		table2str += "The start state is " + startState.getName() + "\n\n";
+		Set<State> states = transitionTable.keySet();
+		table2str += "The number of states is " + states.size()+ "\n\n";
+		table2str += "The states are:\n\n";
+		for (State s : states) table2str += "Name: " + s.getName() + "\nAccepting State? " + s.isAccepting() + "\n\n";
+		
+		table2str += "The followings are the transitions:\n\n";
+		
+		if (currentState!=startState) reset();
+		for (State s : states) {
+			table2str += "From: " + s.getName() + "\n";
+			currentState = s;
+			for (Character c : transitionTable.get(s).keySet()) {
+				table2str += "Transition on " + c.charValue() + " is " + doTransition(c).getName() + "\n";
+			}
+			table2str += "\n";
+		}
+		return table2str;
 	}
 
 	/**
@@ -349,16 +304,6 @@ public class DFA {
 		}
 
 		public boolean isMember(Set<State> memberStates) {
-			/*
-			int count = 0;
-			for (State member2compare : memberStates) {
-				for (State member : this.memberStates) {
-					if (member.equals(member2compare)) count++;
-				}
-			}
-
-			return (count==memberStates.size());
-			*/
 			return this.memberStates.equals(memberStates);
 		}
 
