@@ -82,17 +82,21 @@ public class NFAtoDFAtest {
 				
 		// NFA nfa = createNFA(startState);
 		NFA nfa = new NFA();
+		
 		nfa.withStartState(startState);
 		nfa.withTransitions(transitMap);
 		
 		Set<State> startEps = nfa.getEpsilonClosure(startState);
-		Set<State> startTrans = nfa.getTransition(startState, NFA.EPSILON);
 		
 		for (State s : startEps) System.out.println(s.getName());
 		
-		
 		DFA dfa = new DFA(nfa, startState);
-		dfa.printTransitionTable();
+		// dfa.printTransitionTable();
+		
+		System.out.println("String Test");
+		System.out.println("Grammar: aa* | bb*");
+		System.out.println("Is 'aaa' legal? " + dfa.canAccept("aaa"));
+		System.out.println("Is 'aaa' legal? " + dfa.canAccept("aba"));
 		
 	}
 }

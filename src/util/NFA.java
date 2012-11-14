@@ -60,6 +60,9 @@ public class NFA {
 
     }
     
+
+    
+    
     public Set<Character> getAllowableCharacters() {
     	
     	Set<Character> charSet = new HashSet<Character>();
