@@ -112,10 +112,19 @@ public class NFA {
         return nfa;
     }
 
-    @SuppressWarnings("unchecked")
     public void replace(State oldState, State newState) {
-        Map<State, Map<Character, Set<State>>> clone = 
-            (Map<State, Map<Character, Set<State>>>) ((HashMap<State, Map<Character, Set<State>>>) transitionTable).clone();
+        // first do a deep clone:
+        Map<State, Map<Character, Set<State>>> clone = new HashMap<State, Map<Character, Set<State>>>();
+        for (State inputState : transitionTable.keySet()) {
+            clone.put(inputState, new HashMap<Character, Set<State>>());
+            for (Character transition : transitionTable.get(inputState).keySet()) {
+                clone.get(inputState).put(transition, new HashSet<State>());
+                for (State outputState : transitionTable.get(inputState).get(transition)) {
+                    clone.get(inputState).get(transition).add(outputState);
+                }
+            }
+        }
+        // now iterate over the deep clone to avoid concurrent modification errors
         for (State inState : clone.keySet()) {
             for (Entry<Character, Set<State>> trans : clone.get(inState).entrySet()) {
                 for (State outState : trans.getValue()) {
