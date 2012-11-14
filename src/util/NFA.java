@@ -61,7 +61,12 @@ public class NFA {
     }
     
     public Set<Character> getAllowableCharacters() {
-    	return transitionTable.get(startState).keySet();
+    	
+    	Set<Character> charSet = new HashSet<Character>();
+    	for (Map<Character,Set<State>> map : transitionTable.values()) {
+    		charSet.addAll(map.keySet());
+    	}
+    	return charSet;
     }
     
     public Set<State> getAllStates() {
