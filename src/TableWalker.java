@@ -3,6 +3,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import parser.Token;
 
 import util.DFA;
 import util.State;
@@ -11,22 +14,19 @@ import util.State;
 public class TableWalker {
 	
 	private FileReader reader;
-	private List<DFA> dfaList;
+	private Map<String, DFA> types;
 	
-	public TableWalker(String filepath, List<DFA> dfaList) throws FileNotFoundException
+	public TableWalker(String filepath, Map<String, DFA> types) throws FileNotFoundException
 	{
 		reader = new FileReader(filepath);
-		this.dfaList = dfaList;
+		this.types = types;
 	}
 	
-	public String nextToken() throws IOException, BadTokenException
+	public Token nextToken() throws IOException, BadTokenException
 	{
 		String currentToken = "";
-		String longestValidToken = null;
-		DFA validTokenType = null;
-		List<DFA> possibleTypes = new ArrayList<DFA>(dfaList);
-		
-		reader.mark(255); //mark where we start scanning
+		Token longestValidToken = null;
+		List<String> validTypes = new ArrayList<String>(types.keySet());
 		
 		while(true)
 		{
@@ -42,14 +42,14 @@ public class TableWalker {
 				break;
 			}
 			
-			for(int i=0; i<possibleTypes.size(); i++)
+			List<String> tempTypes = new ArrayList<String>(validTypes);
+			for(String type: tempTypes)
 			{
-				DFA currentType = possibleTypes.get(i);
-				State state = currentType.doTransition(next);
+				DFA currentDFA = types.get(type);
+				State state = currentDFA.doTransition(next);
 				if(state == null)
 				{
-					possibleTypes.remove(i);
-					i--;
+					validTypes.remove(type);
 				}
 				else
 				{
@@ -58,16 +58,18 @@ public class TableWalker {
 					{
 						reader.mark(255); //mark every time we find a new valid token, so we can reset to here later
 											//and put the unused characters back in the stream
-						longestValidToken = currentToken;
-						validTokenType = currentType;
+						longestValidToken = new Token(type, currentToken);
 					}
 				}
 			}
 			
-			if(possibleTypes.size()==0) break;
+			if(validTypes.size()==0) break;
 		}
 		
-		reader.reset();
+		for(DFA dfa: types.values())
+		{
+			dfa.reset();
+		}
 		
 		if(longestValidToken == null)
 		{
@@ -75,6 +77,8 @@ public class TableWalker {
 		}
 		else
 		{
+			reader.reset(); //only reset if we did find some token. Otherwise, we'd just end up looping on a
+							//bad character
 			return longestValidToken;
 		}
 	}
