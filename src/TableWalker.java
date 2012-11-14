@@ -4,16 +4,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import util.DFA2;
+import util.DFA;
 import util.State;
 
 
 public class TableWalker {
 	
 	private FileReader reader;
-	private List<DFA2> dfaList;
+	private List<DFA> dfaList;
 	
-	public TableWalker(String filepath, List<DFA2> dfaList) throws FileNotFoundException
+	public TableWalker(String filepath, List<DFA> dfaList) throws FileNotFoundException
 	{
 		reader = new FileReader(filepath);
 		this.dfaList = dfaList;
@@ -23,8 +23,10 @@ public class TableWalker {
 	{
 		String currentToken = "";
 		String longestValidToken = null;
-		DFA2 validTokenType = null;
-		List<DFA2> possibleTypes = new ArrayList<DFA2>(dfaList);
+		DFA validTokenType = null;
+		List<DFA> possibleTypes = new ArrayList<DFA>(dfaList);
+		
+		reader.mark(255); //mark where we start scanning
 		
 		while(true)
 		{
@@ -42,7 +44,7 @@ public class TableWalker {
 			
 			for(int i=0; i<possibleTypes.size(); i++)
 			{
-				DFA2 currentType = possibleTypes.get(i);
+				DFA currentType = possibleTypes.get(i);
 				State state = currentType.doTransition(next);
 				if(state == null)
 				{
@@ -54,7 +56,8 @@ public class TableWalker {
 					currentToken += next;
 					if(state.isAccepting())
 					{
-						reader.mark(255);
+						reader.mark(255); //mark every time we find a new valid token, so we can reset to here later
+											//and put the unused characters back in the stream
 						longestValidToken = currentToken;
 						validTokenType = currentType;
 					}
