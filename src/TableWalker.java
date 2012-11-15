@@ -46,13 +46,9 @@ public class TableWalker {
 			for(String type: tempTypes)
 			{
 				DFA currentDFA = types.get(type);
-				State state = currentDFA.doTransition(next);
-				if(state == null)
+				try
 				{
-					validTypes.remove(type);
-				}
-				else
-				{
+					State state = currentDFA.doTransition(next);
 					currentToken += next;
 					if(state.isAccepting())
 					{
@@ -60,6 +56,10 @@ public class TableWalker {
 											//and put the unused characters back in the stream
 						longestValidToken = new Token(type, currentToken);
 					}
+				}
+				catch(NullPointerException e)
+				{
+					validTypes.remove(type);
 				}
 			}
 			

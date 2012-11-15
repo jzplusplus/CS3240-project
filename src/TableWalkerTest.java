@@ -185,8 +185,8 @@ public class TableWalkerTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (BadTokenException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Bad Token!");
+			System.out.println(e.getPartialToken());
 		}
 	}
 }
