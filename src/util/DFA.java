@@ -49,9 +49,11 @@ public class DFA {
 		// initializations
 		Set<Character> characterSet = nfa.getAllowableCharacters();
 
+		/*
 		Set<State> nfaStates = nfa.getAllStates();
 		if (!nfaStates.contains(startState)) nfaStates.add(startState); // might be unnecessary
 
+*/
 		Set<State> startMembers = new HashSet<State>();
 		startMembers.add(startState);
 
@@ -61,7 +63,7 @@ public class DFA {
 
 		IntermediateState errorState = new IntermediateState(null, false);
 		for (Character ch : characterSet) {
-			errorState.addTransition(ch, errorState);
+			if (ch!=null) errorState.addTransition(ch, errorState);
 		}
 		errorState.setMarker(false);
 		
@@ -110,6 +112,7 @@ public class DFA {
 
 					} else { // if null, go to error state
 						is.addTransition(input, errorState);
+						if (!dfaStates.contains(errorState)) dfaStates.add(errorState);
 					}
 
 				} // end input null checking
@@ -117,7 +120,8 @@ public class DFA {
 
 		} // end while
 		
-		dfaStates.add(errorState);
+				
+		
 		
 		ArrayList<IntermediateState> isArrList = new ArrayList<IntermediateState>();
 		ArrayList<State> dfaArrList = new ArrayList<State>();
