@@ -56,4 +56,7 @@ public class State implements Comparable<State> {
         return this.name.compareTo(o.name);
     }
 
+    public String toString() {
+        return "<State " + name + (isAcceptingState ? "(*)" : "") + ">";
+    }
 }

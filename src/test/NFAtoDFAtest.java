@@ -15,7 +15,6 @@ public class NFAtoDFAtest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		
 		State startState = new State();
 		State s1 = new State();
 		State s2 = new State(true);
@@ -101,7 +100,7 @@ public class NFAtoDFAtest {
 		System.out.println("Is 'aaa' legal? " + dfa.canAccept("aaa"));
 		System.out.println("Is 'aba' legal? " + dfa.canAccept("aba"));
 		
-		System.out.println();
+		System.out.println(); 
 		
 		
 		NFA a = NFA.acceptCharacter('a');
@@ -112,7 +111,6 @@ public class NFAtoDFAtest {
 		
 		// NFA ab = NFA.concatenate(a, b);
 		NFA abb = NFA.concatenate(NFA.concatenate(a, b), b);
-		
 		NFA nfa2 = NFA.concatenate(aOrbStar, abb);
 		
 		System.out.println(nfa2.toString());

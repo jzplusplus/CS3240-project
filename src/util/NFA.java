@@ -140,6 +140,10 @@ public class NFA {
                 transitionTable.remove(inState);
             }
         }
+        if (this.startState.equals(oldState)) {
+            this.startState = newState;
+        }
+
     }
     public Set<State> getAcceptStates() {
         Set<State> acceptStates = new HashSet<State>();
@@ -168,11 +172,13 @@ public class NFA {
         if (one == null) {
             return two;
         }
-        NFA union = new NFA().withTransitions(one.transitionTable)
-                             .withTransitions(two.transitionTable);
+        NFA oneClone = one.clone();
+        NFA twoClone = two.clone();
+        NFA union = new NFA().withTransitions(oneClone.transitionTable)
+                             .withTransitions(twoClone.transitionTable);
         union.startState = new State();
-        union.withTransition(union.startState, EPSILON, one.startState);
-        union.withTransition(union.startState, EPSILON, two.startState);
+        union.withTransition(union.startState, EPSILON, oneClone.startState);
+        union.withTransition(union.startState, EPSILON, twoClone.startState);
         return union;
     }
 
@@ -183,14 +189,16 @@ public class NFA {
         if (one == null) {
             return two;
         }
-        NFA concat = new NFA().withTransitions(one.transitionTable)
-                              .withTransitions(two.transitionTable);
-        concat.startState = one.startState;
-        for (State oldAccept : one.getAcceptStates()) {
+        NFA oneClone = one.clone();
+        NFA twoClone = two.clone();
+        NFA concat = new NFA().withTransitions(oneClone.transitionTable)
+                              .withTransitions(twoClone.transitionTable);
+        concat.startState = oneClone.startState;
+        for (State oldAccept : oneClone.getAcceptStates()) {
             State newState = new State(oldAccept);
             newState.setAccepting(false);
             concat.replace(oldAccept, newState);
-            concat.withTransition(newState, EPSILON, two.startState);
+            concat.withTransition(newState, EPSILON, twoClone.startState);
         }
         return concat;
     }
@@ -199,11 +207,12 @@ public class NFA {
         if (one == null) {
             return null;
         }
-        NFA star = new NFA().withTransitions(one.transitionTable);
+        NFA oneClone = one.clone();
+        NFA star = new NFA().withTransitions(oneClone.transitionTable);
         star.startState = new State(true);
-        star.withTransition(star.startState, EPSILON, one.startState);
-        for (State accept : one.getAcceptStates()) {
-            star.withTransition(accept, EPSILON, one.startState);
+        star.withTransition(star.startState, EPSILON, oneClone.startState);
+        for (State accept : oneClone.getAcceptStates()) {
+            star.withTransition(accept, EPSILON, oneClone.startState);
         }
         return star;
     }
@@ -251,6 +260,17 @@ public class NFA {
         sb.append(">");
         return sb.toString();
     }
-
+    
+    public NFA clone() {
+        NFA clone = new NFA().withTransitions(transitionTable).withStartState(this.startState);
+        List<State> sortedKeys = new ArrayList<State>(transitionTable.keySet());
+        Collections.sort(sortedKeys);
+        for (State orig : sortedKeys) {
+            State clonedState = new State(orig.isAccepting());
+            clone.replace(orig, clonedState);
+        }
+        return clone;
+ 
+    }
 
 }
