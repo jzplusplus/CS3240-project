@@ -11,14 +11,12 @@ public enum RegexTokenType implements TokenType {
 			"[ [\\\\] | [\\\\\\\\] | [\\\\\\*] | [\\\\\\+] | [\\\\\\?] | [\\\\\\|] | [\\\\\\[] | [\\\\\\]] | [\\\\\\(] | [\\\\\\)] | [\\\\\\.] | [\\\\\\'] | [\\\\\\\"] ]*/"Q"),
 	
 	TOKEN_IN("IN"),
-	TOKEN_DEFINE("$"),
 	
 	TOKEN_UPPER("[A-Z]"),
-	TOkEN_LOWER("[a-z]"),
-	TOKEN_IDENTIFIER("[a-zA-Z]+"),
-	
+	TOkEN_LOWER("[a-z]"),	
 	TOKEN_DIGIT("[0-9]"),
 	
+	TOKEN_DOLLAR("\\$"),
 	TOKEN_EQUALS("\\="),
 	TOKEN_PLUS("\\+"),
 	TOKEN_DASH("\\-"),

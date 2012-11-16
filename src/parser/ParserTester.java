@@ -13,7 +13,7 @@ public class ParserTester {
 		try {
 			ps = new Parser();
 			
-			String[] inputs = {"()*"};
+			String[] inputs = {" IN "};
 			
 			for(String expression : inputs) {
 				System.out.println("Parsing began...");
