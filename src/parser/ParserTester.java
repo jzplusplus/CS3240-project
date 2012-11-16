@@ -13,7 +13,7 @@ public class ParserTester {
 		try {
 			ps = new Parser();
 			
-			String[] inputs = {"(A | B)*"};
+			String[] inputs = {"()*"};
 			
 			for(String expression : inputs) {
 				System.out.println("Parsing began...");

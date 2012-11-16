@@ -11,7 +11,7 @@ public enum RegexTokenType implements TokenType {
 			"[ [\\\\] | [\\\\\\\\] | [\\\\\\*] | [\\\\\\+] | [\\\\\\?] | [\\\\\\|] | [\\\\\\[] | [\\\\\\]] | [\\\\\\(] | [\\\\\\)] | [\\\\\\.] | [\\\\\\'] | [\\\\\\\"] ]*/"Q"),
 	
 	TOKEN_IN("IN"),
-	TOKEN_DEFINE("[$][A-Z]+"),
+	TOKEN_DEFINE("$"),
 	
 	TOKEN_UPPER("[A-Z]"),
 	TOkEN_LOWER("[a-z]"),
@@ -21,7 +21,7 @@ public enum RegexTokenType implements TokenType {
 	
 	TOKEN_EQUALS("\\="),
 	TOKEN_PLUS("\\+"),
-	TOKEN_MINUS("\\-"),
+	TOKEN_DASH("\\-"),
 	TOKEN_ASTE("\\*"),
 	TOKEN_UP("\\^"),
 	TOKEN_DOT("\\."),
@@ -34,8 +34,8 @@ public enum RegexTokenType implements TokenType {
 
   // Lexemes
   public static final String LEX_EQUALS = "=";
-  public static final String LEX_PlUS = "+";
-  public static final String LEX_MINUS = "-";
+  public static final String LEX_PLUS = "+";
+  public static final String LEX_DASH = "-";
   public static final String LEX_IN = "IN";
   public static final String LEX_ASTE = "*";
   public static final String LEX_UP = "^";
