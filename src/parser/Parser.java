@@ -24,6 +24,7 @@ public final class Parser {
 	    }		
 	}
 
+	// <rexp> -> <rexp1> <rexpPrime>
 	void rexp() throws ParseException{
 		System.out.println("rexp");
 		if(ahead!=null){
@@ -36,6 +37,7 @@ public final class Parser {
 		System.out.println("rexp ENDS");
 	}
 	
+	// <rexp1> -> <rexp2> <rexp1Prime> | E
 	void rexp1() throws ParseException{
 		System.out.println("rexp1");
 		if(ahead!=null){
@@ -48,6 +50,7 @@ public final class Parser {
 		System.out.println("rexp1 ENDS");
 	}
 	
+	// rexpPrime -> UNION <rexp1> <rexpPrime> | E
 	void rexpPrime() throws ParseException{
 		System.out.println("rexpPrime");
 		if(ahead!=null){
@@ -61,6 +64,7 @@ public final class Parser {
 				token = ahead;
 	    		match(RegexTokenType.LEX_UNION);
 	    		rexp1();
+	    		rexpPrime();
 	    		// Add to Tree
 	    		System.out.println("Saved Here: " + token.getValue());
 	    		
@@ -69,10 +73,11 @@ public final class Parser {
 			}
 		}
 		
-		match(null);
 		System.out.println("rexpPrime ENDS");
+		match(null);
 	}
 	
+	// <rexp1¡¯> -> <rexp2> <rexp1¡¯>  | E        
 	void rexp1Prime() throws ParseException{
 		System.out.println("rexp1Prime");
 		if(ahead!=null){
@@ -81,10 +86,13 @@ public final class Parser {
 		}
 		
 		rexp2();
-		match(null);
+		rexp1Prime();
+		
 		System.out.println("rexp1Prime ENDS");
+		match(null);
 	}
 	
+	// <rexp2> -> (<rexp>) <rexp2-tail>  | RE_CHAR <rexp2-tail> | <rexp3>
 	void rexp2() throws ParseException{
 		System.out.println("rexp2");
 		if(ahead!=null){
@@ -97,7 +105,7 @@ public final class Parser {
 		while(ahead!=null){
 			if(ahead.getType() == RegexTokenType.TOKEN_L_PAREN){
 				token = ahead;
-				match((String)ahead.getValue());
+				match(RegexTokenType.LEX_L_PAREN);
 	    		rexp();
 	    		match(RegexTokenType.LEX_R_PAREN);
 	    		rexp2_tail();
@@ -106,7 +114,7 @@ public final class Parser {
 	    
 			}else if(ahead.getType() == RegexTokenType.RE_CHAR){
 				token = ahead;
-				match((String)ahead.getValue());
+				match((String)ahead.getValue()); // RE_CHAR
 				rexp2_tail();
 				// Add to Tree
 				System.out.println("Saved Here: " + token.getValue());
@@ -120,6 +128,7 @@ public final class Parser {
 		System.out.println("rexp2 ENDS");
 	}
 	
+	// <rexp2-tail> -> * | + | E
 	void rexp2_tail() throws ParseException{
 		Token token;
 		
@@ -140,10 +149,11 @@ public final class Parser {
 			System.out.println("Saved Here: " + token.getValue());
 		}
 		
-		match(null);		
 		System.out.println("rexp2_tail ENDS");
+		match(null);		
 	}
 	
+	// <rexp3> -> <char-class>  | E   
 	void rexp3() throws ParseException{
 		System.out.println("rexp3");
 		if(ahead!=null){
@@ -152,10 +162,12 @@ public final class Parser {
 		}
 		
 		char_class();
-		match(null);
+		
 		System.out.println("rexp3 ENDS");
+		match(null);
 	}
 	
+	// <char-class> -> .  |  [ <char-class1>  | <defined-class>
 	void char_class() throws ParseException{
 		System.out.println("char_class");
 		if(ahead!=null){
@@ -174,26 +186,24 @@ public final class Parser {
 		while(ahead!=null){
 			if(ahead.getType() == RegexTokenType.TOKEN_L_BRACKET){
 				token = ahead;
-				match((String)ahead.getValue());
+				match(RegexTokenType.LEX_L_BRACKET);
 				char_class1();	
 				// Add to Tree
 				System.out.println("Saved Here: " + token.getValue());
 				
-			}else if(ahead.getType() == RegexTokenType.TOKEN_DEFINE){
+			}else { // defined_class
 				token = ahead;
 				match((String) ahead.getValue());		
 				// Add to Tree
 				System.out.println("Saved Here: " + token.getValue());
-				break;
-				
-			}else{
 				break;
 			}
 		}
 		System.out.println("ahead: " + ahead.getValue());
 		System.out.println("char_class ENDS");
 	}
-		
+	
+	// <char-class1> -> <char-set-list> | <exclude-set>
 	void char_class1() throws ParseException{
 		System.out.println("char_class1");
 		if(ahead!=null){
@@ -206,6 +216,7 @@ public final class Parser {
 		System.out.println("char_class1 ENDS");
 	}
 	
+	// <char-set-list> -> <char-set> <char-set-list> | E
 	void char_set_list() throws ParseException{
 		System.out.println("char_set_list");
 		if(ahead!=null){
@@ -220,7 +231,7 @@ public final class Parser {
 		while(ahead!=null){
 			if(ahead.getType() == RegexTokenType.TOKEN_R_BRACKET){
 				token = ahead;
-				match((String)ahead.getValue());
+				match(RegexTokenType.LEX_R_BRACKET);
 				// Add to Tree		
 				System.out.println("Saved Here: " + token.getValue());
 				
@@ -229,10 +240,11 @@ public final class Parser {
 			}
 		}
 		
-		match(null);
 		System.out.println("char_set_list ENDS");
+		match(null);
 	}
 	
+	// <char-set> -> CLS_CHAR <char-set-tail> 
 	void char_set() throws ParseException{
 		System.out.println("char_set");
 		if(ahead!=null){
@@ -245,6 +257,7 @@ public final class Parser {
 		while(ahead!=null){
 			if(ahead.getType() == RegexTokenType.CLS_CHAR){
 				token = ahead;
+				match((String)ahead.getValue()); // CLS_CHAR
 				char_set_tail();
 				// Add to Tree
 				System.out.println("Saved Here: " + token.getValue());
@@ -257,6 +270,7 @@ public final class Parser {
 		System.out.println("char_set ENDS");
 	}
 	
+	// <char-set-tail> -> - CLS_CHAR | E
 	void char_set_tail() throws ParseException{		
 		System.out.println("char_set_tail");
 		if(ahead!=null){
@@ -267,9 +281,11 @@ public final class Parser {
 		Token token;
 		
 		while(ahead!=null){
-			if(ahead.getType() == RegexTokenType.CLS_CHAR){
+			if(ahead.getType() == RegexTokenType.TOKEN_DASH){
 				// Add to Tree
-				System.out.println("Saved Here: " + ahead.getValue());
+				match(RegexTokenType.LEX_DASH);
+				// Add to Tree
+				match((String)ahead.getValue()); // cLS_CHAR
 				
 			}else{
 				break;
@@ -277,10 +293,12 @@ public final class Parser {
 			
 		}
 		
-		match(null);
 		System.out.println("char_set_tail ENDS");
+		match(null);
+
 	}
 	
+	// <exclude-set> -> ^ <char-set>] IN <exclude-set-tail>  
 	void exclude_set() throws ParseException{
 		System.out.println("exclude_set");
 		if(ahead!=null){
@@ -293,33 +311,28 @@ public final class Parser {
 		while(ahead!=null){
 			if(ahead.getType() == RegexTokenType.TOKEN_UP){
 				token = ahead;
-				match((String)ahead.getValue());
-				char_set();
 				// Add to Tree
-				System.out.println("Saved Here: " + token.getValue());
+				match(RegexTokenType.LEX_UP);
+				char_set();
 				
-				if(ahead.getType() == RegexTokenType.TOKEN_R_BRACKET){
-					token = ahead;
-					match((String)ahead.getValue());
-					// Add to Tree
-					System.out.println("Saved Here: " + token.getValue());
-					
-					if(ahead.getType() == RegexTokenType.TOKEN_IN){
-						token = ahead;
-						match((String)ahead.getValue());
-						exclude_set_tail();
-						// Add to Tree
-						System.out.println("Saved Here: " + token.getValue());
-						
-					}					
-				}
+				// Add to Tree
+				match(RegexTokenType.LEX_R_BRACKET);
+				
+				// Add to Tree
+				match(RegexTokenType.LEX_IN);
+				
+				exclude_set_tail();	
+				
+			}else {
+				break;
 			}
-			
-		}		
+		}
+		
 		System.out.println("exclude_set ENDS");
 		
 	}
 	
+	// <exclude-set-tail> -> [<char-set>]  | <defined-class>
 	void exclude_set_tail() throws ParseException{
 		System.out.println("exclude_set_tail");
 		if(ahead!=null){
@@ -328,30 +341,23 @@ public final class Parser {
 		}
 		
 		Token token;
-		
-		while(ahead!=null){
-			if(ahead.getType() == RegexTokenType.LEX_L_BRACKET){		
-				token = ahead;
-				match((String)ahead.getValue());			
-				char_set();
-				// Add to Tree
-				System.out.println("Saved Here: " + token.getValue());
+
+		if(ahead.getType() == RegexTokenType.TOKEN_L_BRACKET){		
+			token = ahead;
+			match(RegexTokenType.LEX_L_BRACKET);			
+			char_set();
+			match(RegexTokenType.LEX_R_BRACKET);
 				
-				match(RegexTokenType.LEX_R_BRACKET);
-				
-			}else if(ahead.getType() == RegexTokenType.TOKEN_DEFINE){
-				token = ahead;
-				match((String) ahead.getValue());
-				// Add to Tree
-				System.out.println("Saved Here: " + token.getValue());
-				break;	
-				
-			}else {
-				break;
-			}
+		}else { // defined_class
+			token = ahead;
+			match((String) ahead.getValue()); 
+			// Add to Tree
+			System.out.println("Saved Here: " + token.getValue());	
 		}
-		match(null);
+		
 		System.out.println("exclude_set_tail ENDS");
+		match(null);
+
 	}
 
 	public Parser() {
