@@ -98,8 +98,8 @@ public final class Parser {
 				match(RegexTokenType.LEX_L_PAREN);
 		    	rexp();
 		    	// Add to Tree
-		    	System.out.println(ahead.getValue());
-		    	match(RegexTokenType.LEX_R_PAREN);
+		    	if(ahead!=null)
+		    		match(RegexTokenType.LEX_R_PAREN);
 		    	rexp2_tail();
 		    
 			}else if(ahead.getType() == RegexTokenType.RE_CHAR){
@@ -185,8 +185,13 @@ public final class Parser {
 			System.out.println("ahead value: " + ahead.getValue());
 		}
 		
-		char_set_list();
-		exclude_set();		
+		if(ahead.getType() == RegexTokenType.TOKEN_UP){
+			exclude_set();		
+			
+		}else {
+			char_set_list();
+		}
+
 		System.out.println("char_class1 ENDS");
 	}
 	
@@ -256,22 +261,19 @@ public final class Parser {
 			System.out.println("ahead type: " + ahead.getType());
 			System.out.println("ahead value: " + ahead.getValue());
 		}
+
+		// Add to Tree
+		match(RegexTokenType.LEX_UP);
 			
-		if(ahead.getType() == RegexTokenType.TOKEN_UP){
-			// Add to Tree
-			match(RegexTokenType.LEX_UP);
-			
-			char_set();
+		char_set();
 				
-			// Add to Tree
-			match(RegexTokenType.LEX_R_BRACKET);
+		// Add to Tree
+		match(RegexTokenType.LEX_R_BRACKET);
 				
-			// Add to Tree
-			match(RegexTokenType.LEX_IN);
+		// Add to Tree
+		match(RegexTokenType.LEX_IN);
 				
-			exclude_set_tail();	
-				
-		}
+		exclude_set_tail();	
 		
 		System.out.println("exclude_set ENDS");		
 	}

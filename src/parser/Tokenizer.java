@@ -6,10 +6,6 @@ import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-/**
- * A reasonably generic tokenizer for tokens that can be
- * defined with non-conflicting regular expressions.
- */
 public class Tokenizer {
   private ArrayList<TokenType> tokenList;
   private Pattern separator;
@@ -31,14 +27,10 @@ public class Tokenizer {
     matcher.reset(input);
   }
 
-  /**
-   * Returns the next token in the input.  If at end of input
-   * returns null.  If no token is found, throws an exception.
-   */
   public Token nextToken() throws TokenNotFoundException {
     Iterator<TokenType> it;
 
-    // Skip over any separators.
+    // Skip over any separators
     matcher.usePattern(separator);
     if(matcher.lookingAt()) {
       matcher.region(matcher.end(), matcher.regionEnd());

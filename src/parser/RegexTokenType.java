@@ -4,11 +4,11 @@ import java.util.regex.Pattern;
 
 public enum RegexTokenType implements TokenType {
 	
-  // Token types
+	// Token types
 	CLS_CHAR(/*[^([\\\\] | [\\^] | [\\-] | [\\[] | [\\]])]" + 
-			 "[ [\\\\\\\\] | [\\\\\\^] | [\\\\\\-] | [\\\\\\[] | [\\\\\\]] ]*/"Q"),
+			 "[ [\\\\\\\\] | [\\\\\\^] | [\\\\\\-] | [\\\\\\[] | [\\\\\\]] ]*/"Commented Out"),
 	RE_CHAR(/*[^([\\\\s]|[\\\\]|[\\*]|[\\+]|[\\?]|[\\[]|[\\]]|[\\(]|[\\)]|[\\.]|[\\']|[\\\"])]" + 
-			"[ [\\\\] | [\\\\\\\\] | [\\\\\\*] | [\\\\\\+] | [\\\\\\?] | [\\\\\\|] | [\\\\\\[] | [\\\\\\]] | [\\\\\\(] | [\\\\\\)] | [\\\\\\.] | [\\\\\\'] | [\\\\\\\"] ]*/"Q"),
+			"[ [\\\\] | [\\\\\\\\] | [\\\\\\*] | [\\\\\\+] | [\\\\\\?] | [\\\\\\|] | [\\\\\\[] | [\\\\\\]] | [\\\\\\(] | [\\\\\\)] | [\\\\\\.] | [\\\\\\'] | [\\\\\\\"] ]*/"Commented Out"),
 	
 	TOKEN_IN("IN"),
 	
@@ -30,7 +30,7 @@ public enum RegexTokenType implements TokenType {
 	TOKEN_L_PAREN("\\("),
 	TOKEN_R_PAREN("\\)");
 
-  // Lexemes
+  // Lexes
   public static final String LEX_EQUALS = "=";
   public static final String LEX_PLUS = "+";
   public static final String LEX_DASH = "-";
