@@ -15,7 +15,11 @@ public class NFAtoDFAtest {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		State startState = new State();
+				
+		//////////////////////////////////////////////////////
+		//////////////////// TEST CASE 1 ////////////////////
+		//////////////////////////////////////////////////////
+		State startState1 = new State();
 		State s1 = new State();
 		State s2 = new State(true);
 		State s3 = new State();
@@ -53,55 +57,50 @@ public class NFAtoDFAtest {
 		Map<Character, Set<State>> t4 = new HashMap<Character, Set<State>>();
 		
 		t0.put(NFA.EPSILON, fromS0eps);
-		// t0.put('a', null);
-		// t0.put('b', null);
 		
-		// t1.put(NFA.EPSILON, null);
 		t1.put('a', fromS1a);
-		// t1.put('b', null);
 		
-		// t2.put(NFA.EPSILON, null);
 		t2.put('a', fromS2a);
-		// t2.put('b', null);
 		
-		// t3.put(NFA.EPSILON, null);
-		// t3.put('a', null);
 		t3.put('b', fromS3b);
 		
-		// t4.put(NFA.EPSILON, null);
-		// t4.put('a', null);
 		t4.put('b', fromS4b);
 		
 		Map<State,Map<Character, Set<State>>> transitMap = new HashMap<State,Map<Character, Set<State>>>();
-		transitMap.put(startState, t0);
+		transitMap.put(startState1, t0);
 		transitMap.put(s1, t1);
 		transitMap.put(s2, t2);
 		transitMap.put(s3, t3);
 		transitMap.put(s4, t4);
 		
-		NFA nfa = new NFA();
+		NFA nfa1 = new NFA();
 		
-		nfa.withStartState(startState);
-		nfa.withTransitions(transitMap);
+		nfa1.withStartState(startState1);
+		nfa1.withTransitions(transitMap);
 		
-		DFA dfa = new DFA(nfa, startState);
-		// dfa.printTransitionTable();
+		DFA dfa1 = new DFA(nfa1, startState1);
+			
 		System.out.println("DFA Test Case 1");
 		System.out.println("Grammar: aa* | bb*");
 		
 		System.out.println();
 		
-		System.out.println(dfa.toString());
+		System.out.println(dfa1.toString());
 				
 		System.out.println();
 		
 		System.out.println("Test Strings:");
 		
-		System.out.println("Is 'aaa' legal? " + dfa.canAccept("aaa"));
-		System.out.println("Is 'aba' legal? " + dfa.canAccept("aba"));
+		System.out.println("Is 'aaa' legal? " + dfa1.canAccept("aaa"));
+		System.out.println("Is 'aba' legal? " + dfa1.canAccept("aba"));
+		System.out.println("Is 'aaaaaab' legal? " + dfa1.canAccept("aaaaaab"));
 		
 		System.out.println(); 
+		System.out.println(); 
 		
+		//////////////////////////////////////////////////////
+		//////////////////// TEST CASE 2 ////////////////////
+		//////////////////////////////////////////////////////
 		
 		NFA a = NFA.acceptCharacter('a');
 		NFA b = NFA.acceptCharacter('b');
@@ -109,16 +108,13 @@ public class NFAtoDFAtest {
 		NFA aOrb = NFA.union(a, b);
 		NFA aOrbStar = NFA.kleeneStar(aOrb);
 		
-		// NFA ab = NFA.concatenate(a, b);
-		NFA abb = NFA.concatenate(NFA.concatenate(a, b), b);
+		NFA ab = NFA.concatenate(a, b);
+		NFA abb = NFA.concatenate(ab, b);
 		NFA nfa2 = NFA.concatenate(aOrbStar, abb);
 		
-		System.out.println(nfa2.toString());
+		DFA dfa2 = new DFA(nfa2, nfa2.getStartState());
+					
 		
-		DFA dfa2 = new DFA(aOrbStar, aOrbStar.getStartState());
-		
-		DFA dfa3 = new DFA(abb, abb.getStartState());
-				
 		System.out.println("DFA Test Case 2");
 		System.out.println("Grammar: (a|b)*abb");
 		
@@ -131,12 +127,39 @@ public class NFAtoDFAtest {
 		System.out.println("Test Strings:");
 		
 		System.out.println("Is 'abb' legal? " + dfa2.canAccept("abb"));
-		// System.out.println("Is 'aba' legal? " + dfa.canAccept("aba"));
+		System.out.println("Is 'aab' legal? " + dfa2.canAccept("aab"));
+		System.out.println("Is 'aabb' legal? " + dfa2.canAccept("aabb"));
+		System.out.println("Is 'bb' legal? " + dfa2.canAccept("bb"));
+		System.out.println("Is 'ababbababababb' legal? " + dfa2.canAccept("ababbababababb"));
+		System.out.println("Is 'abababababab' legal? " + dfa2.canAccept("ababababab"));
 		
-		System.out.println("Is 'abb' legal? " + dfa3.canAccept("abb"));
-		System.out.println("Is 'abb' legal? " + dfa3.canAccept("abb"));
+		System.out.println();
 		
+		//////////////////////////////////////////////////////
+		//////////////////// TEST CASE 3 ////////////////////
+		//////////////////////////////////////////////////////
 		
+		NFA abPlus = NFA.kleenePlus(ab);
+		NFA nfa3 = NFA.concatenate(aOrbStar, abPlus);
+		DFA dfa3 = new DFA(nfa3, nfa3.getStartState());
 		
+		System.out.println("DFA Test Case 3");
+		System.out.println("Grammar: (a|b)*(ab)+");
+		
+		System.out.println();
+		
+		System.out.println(dfa3.toString());
+		
+		System.out.println();
+
+		System.out.println("Test Strings:");
+		
+		System.out.println("Is '' (empty string) legal? " + dfa3.canAccept(""));
+		System.out.println("Is 'ab' legal? " + dfa3.canAccept("ab"));
+		System.out.println("Is 'abab' legal? " + dfa3.canAccept("abab"));
+		System.out.println("Is 'bb' legal? " + dfa3.canAccept("bb"));
+		System.out.println("Is 'aabbaabababab' legal? " + dfa3.canAccept("aabbaabababab"));
+		System.out.println("Is 'abababbbabbba' legal? " + dfa3.canAccept("abababbbabbba"));
+	
 	}
 }

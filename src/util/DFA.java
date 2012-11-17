@@ -53,21 +53,16 @@ public class DFA {
 		Set<State> nfaStates = nfa.getAllStates();
 		if (!nfaStates.contains(startState)) nfaStates.add(startState); // might be unnecessary
 
-*/
+		 */
 		Set<State> startMembers = new HashSet<State>();
-		startMembers.add(startState);
+		startMembers.addAll(nfa.getEpsilonClosure(startState));
 
 		IntermediateState dfaStartState = new IntermediateState(startMembers, startState.isAccepting());
 		Set<IntermediateState> dfaStates = new HashSet<IntermediateState>();
 		dfaStates.add(dfaStartState);
 
-		IntermediateState errorState = new IntermediateState(null, false);
-		for (Character ch : characterSet) {
-			if (ch!=null) errorState.addTransition(ch, errorState);
-		}
-		errorState.setMarker(false);
-		
-		
+		IntermediateState errorState = createErrorState(characterSet);
+
 		while (containsUnmarkedState(dfaStates)) {
 
 			IntermediateState is = getUnmarkedState(dfaStates);
@@ -76,20 +71,53 @@ public class DFA {
 			for (Character input : characterSet) {
 				if (input!=null) {
 					Set<State> epsTransitions = new HashSet<State>();
-					Set<State> temp = null;
+					// Set<State> temp = null;
 					for (State s : is.getMemberStates()) {
 
+						/*
 						temp = getEpsilonClosure(s);	
-						if (temp!=null) epsTransitions.addAll(temp);
+						if (temp!=null) {
+							epsTransitions.addAll(temp);
+							for (State epsFromS : temp) {
+								if (nfa.getTransition(epsFromS, input)!=null) {
+									epsTransitions.addAll(nfa.getTransition(epsFromS, input));
+									if (getEpsilonClosure(nfa.getTransition(epsFromS, input))!=null) {
+										epsTransitions.addAll(getEpsilonClosure(nfa.getTransition(epsFromS, input)));
+									}
+								}
+								
+							}
+						}
 
 						Set<State> onInput = nfa.getTransition(s, input); 
 						if (onInput!=null && !onInput.isEmpty()) {
+							epsTransitions.addAll(onInput);
 							epsTransitions.addAll(getEpsilonClosure(onInput));
 						}
+						*/
+						
+						
+						// reading before finding eps
+						Set<State> onInput = nfa.getTransition(s, input);
+						if (onInput!=null && !onInput.isEmpty()){
+							epsTransitions.addAll(onInput);
+							// epsTransitions.addAll(getEpsilonClosure(onInput));
+							
+							if (getEpsilonClosure(onInput)!=null) {
+								Set<State> epsStates = getEpsilonClosure(onInput);
+								if (epsStates!=null && !epsStates.isEmpty()) epsTransitions.addAll(epsStates);
+								
+							}
+						}
+						
+						
+						
 
 					} // end for State
-					
+
 					if (epsTransitions!=null && !epsTransitions.isEmpty()) {
+
+						/*
 						Set<State> stInput = new HashSet<State>();
 						for (State st : epsTransitions) {
 							stInput.addAll(nfa.getTransition(st, input));
@@ -98,12 +126,13 @@ public class DFA {
 						if (stInput!=null && !stInput.isEmpty()) {
 							epsTransitions.addAll(stInput);
 						}
+						 */
 
 						IntermediateState newIstate = convertToIntermediateState(epsTransitions);
-						
+
 						if (containsAsMember(dfaStates,epsTransitions)) {
 							is.addTransition(input, findTheState(dfaStates, epsTransitions));
-						
+
 						} else {
 							dfaStates.add(newIstate);
 							is.addTransition(input, newIstate);
@@ -119,17 +148,17 @@ public class DFA {
 			} // end for Character
 
 		} // end while
-		
-				
-		
-		
+
+
+
+
 		ArrayList<IntermediateState> isArrList = new ArrayList<IntermediateState>();
 		ArrayList<State> dfaArrList = new ArrayList<State>();
 		for (IntermediateState iState : dfaStates) {
 			isArrList.add(iState);
 			dfaArrList.add(isArrList.indexOf(iState), new State(iState.isAccepting()));
 		}
-		
+
 		for (IntermediateState iState : isArrList) {
 			Map<Character, State> transition = new HashMap<Character, State>();
 			for (Character input : characterSet) {
@@ -161,8 +190,11 @@ public class DFA {
 	}
 
 	private IntermediateState findTheState(Set<IntermediateState> iStates, Set<State> states) {
-		for (IntermediateState iState : iStates) {
-			if (iState.isMember(states)) return iState;
+		if (states!=null) {
+			for (IntermediateState iState : iStates) {
+
+				if (iState.isMember(states)) return iState;
+			}
 		}
 		return null;
 	}
@@ -175,25 +207,28 @@ public class DFA {
 	 * @return a set of states that are reachable from the given set of states (epsilon transitions)
 	 */
 	private Set<State> getEpsilonClosure(Set<State> states) {
-		Set<State> newStates = new HashSet<State>();
-		boolean legitimate = false;
-		for (State s : states) {
-			legitimate = false;
-			Set<State> epsTransitions = nfa.getEpsilonClosure(s);
-			if (epsTransitions!=null) {
-				for (State member : epsTransitions) { // if epsilon of epsilon does not have the input state,
-					if (nfa.getEpsilonClosure(member).contains(s)) {
-						if(!nfa.getTransition(member, nfa.getEpsilon()).contains(s)) {
-							legitimate = true;
+		if (states!=null) {
+			Set<State> newStates = new HashSet<State>();
+			boolean legitimate = false;
+			for (State s : states) {
+				legitimate = false;
+				Set<State> epsTransitions = nfa.getEpsilonClosure(s);
+				if (epsTransitions!=null) {
+					for (State member : epsTransitions) { // if epsilon of epsilon does not have the input state,
+						if (nfa.getEpsilonClosure(member).contains(s)) {
+							if(!nfa.getTransition(member, nfa.getEpsilon()).contains(s)) {
+								legitimate = true;
+							}
 						}
-					}
 
+					}
 				}
+				if (!legitimate) epsTransitions.remove(s);
+				newStates.addAll(epsTransitions);
 			}
-			if (!legitimate) epsTransitions.remove(s);
-			newStates.addAll(epsTransitions);
+			return (newStates.isEmpty() ? null : newStates);
 		}
-		return (newStates.isEmpty() ? null : newStates);
+		return null;
 	}
 
 	/**
@@ -203,18 +238,22 @@ public class DFA {
 	 * @param state a state
 	 * @return a set of states that are reachable from the given set of states (epsilon transitions)
 	 */
+	@SuppressWarnings("unused")
 	private Set<State> getEpsilonClosure(State state) {
-		Set<State> newStates = new HashSet<State>();
-		Set<State> epsTransitions = nfa.getEpsilonClosure(state);
-		if (epsTransitions!=null) {
-			if (epsTransitions.contains(state)) {
-				if(!nfa.getTransition(state, nfa.getEpsilon()).contains(state)) {
-					epsTransitions.remove(state);
+		if (state!=null) {
+			Set<State> newStates = new HashSet<State>();
+			Set<State> epsTransitions = nfa.getEpsilonClosure(state);
+			if (epsTransitions!=null) {
+				if (epsTransitions.contains(state)) {
+					if(!nfa.getTransition(state, nfa.getEpsilon()).contains(state)) {
+						epsTransitions.remove(state);
+					}
 				}
 			}
+			newStates.addAll(epsTransitions);
+			return (newStates.isEmpty() ? null : newStates);
 		}
-		newStates.addAll(epsTransitions);
-		return (newStates.isEmpty() ? null : newStates);
+		return null;
 	}
 
 	private boolean containsUnmarkedState(Set<IntermediateState> iStates) {
@@ -245,41 +284,35 @@ public class DFA {
 		return false;
 	}
 
-	public void printTransitionTable() {
-		System.out.println("The start state is " + startState.getName());
-		Set<State> states = transitionTable.keySet();
-		System.out.println("The states of the DFA are:" );
-		for (State s : states) System.out.println("Name: " + s.getName() + "\nAccepting State? " + s.isAccepting());
-		System.out.println();
-		if (currentState!=startState) reset();
-		for (State s : states) {
-			System.out.println("From " + s.getName());
-			currentState = s;
-			for (Character c : transitionTable.get(s).keySet()) {
-				System.out.println("To " + doTransition(c).getName() + " on " + c.charValue());
-			}
+	private IntermediateState createErrorState(Set<Character> characterSet) {
+		IntermediateState errorState = new IntermediateState(null, false);
+		for (Character ch : characterSet) {
+			if (ch!=null) errorState.addTransition(ch, errorState);
 		}
-	}
-	
+		errorState.setMarker(false);
+		errorState.setErrorState(true);
+		return errorState;
+	} 
+
 	public String toString() {
-		String table2str = "";
-		
-		table2str += "The start state is " + startState.getName() + "\n\n";
+		String table2str = "DFA of the following NFA:\n" + nfa.toString() + "\n\n";
+
 		Set<State> states = transitionTable.keySet();
-		table2str += "The number of states is " + states.size()+ "\n\n";
-		table2str += "The states are:\n\n";
-		for (State s : states) table2str += "Name: " + s.getName() + "\nAccepting State? " + s.isAccepting() + "\n\n";
-		
-		table2str += "The followings are the transitions:\n\n";
 		
 		if (currentState!=startState) reset();
+		
 		for (State s : states) {
-			table2str += "From: " + s.getName() + "\n";
-			currentState = s;
+			table2str += s.getName();
+			if (s.equals(startState)) table2str += "(S)";
+			else if (s.isAccepting()) table2str += "(*)";
+			table2str +=  "\n\t{ ";
 			for (Character c : transitionTable.get(s).keySet()) {
-				table2str += "Transition on " + c.charValue() + " is " + doTransition(c).getName() + "\n";
+				currentState = s;
+				table2str += c.charValue() + ": ";  
+				if (doTransition(c).isAccepting()) table2str += doTransition(c).getName() + "(*); ";
+				else table2str += doTransition(c).getName() + ";    ";
 			}
-			table2str += "\n";
+			table2str += " }\n";
 		}
 		return table2str;
 	}
@@ -295,20 +328,29 @@ public class DFA {
 		Set<State> memberStates;
 		Map<Character, IntermediateState> transitionMap;
 		boolean marker;
+		boolean errorState;
 
 		public IntermediateState(Set<State> memberStates, boolean isAcceptingState) {
 			super(isAcceptingState);
 			this.memberStates = memberStates;
 			transitionMap = new HashMap<Character, IntermediateState>();
 			marker = true;
+			errorState = false;
 		}
 
 		public Set<State> getMemberStates() {
 			return memberStates;
 		}
 
+		/**
+		 * If memberStates of this state is null, then the state is the error state
+		 * where all questionable transitions wind up.
+		 * 
+		 * @param memberStates
+		 * @return true if the input set of states is same as the members of this intermediate state
+		 */
 		public boolean isMember(Set<State> memberStates) {
-			return this.memberStates.equals(memberStates);
+			return this.getErrorState() ?  false : this.memberStates.equals(memberStates);
 		}
 
 		public void addTransition(Character input, IntermediateState to) {
@@ -326,6 +368,15 @@ public class DFA {
 		public void setMarker(boolean marker) {
 			this.marker = marker;
 		}
+
+		public boolean getErrorState() {
+			return errorState;
+		}
+
+		public void setErrorState(boolean isErrorState) {
+			this.errorState = isErrorState;
+		}
+
 	} // end private class IntermediateState
 
 } // end class DFA
