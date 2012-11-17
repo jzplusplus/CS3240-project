@@ -3,7 +3,6 @@ package parser;
 import java.util.ArrayList;
 import java.util.Stack;
 
-
 /**
  * 
  */
@@ -39,9 +38,9 @@ public final class Parser {
 			if(DEBUG)
 				System.out.println("|");
 			tokenStack.push("|");
-				te.getNextToken();
-			   rexp1();
-			   rexpPrime();
+			te.getNextToken();
+			rexp1();
+			rexpPrime();
 			    		
 		}else {
 			return;
@@ -133,8 +132,8 @@ public final class Parser {
 			}
 
 			if(DEBUG)
-				System.out.println("^");
-			tokenStack.push("^");
+				System.out.println("*");
+			tokenStack.push("*");
 			te.getNextToken(); 
 				
 		}else if(ahead.getType() == TokenType.PLUS) {
@@ -305,10 +304,8 @@ public final class Parser {
 
 	}
 	 
-     ArrayList<Character> defined_class(Token token, boolean exclude) throws ParseException {
-         
-         return null;
-         
+    void defined_class(Token token, boolean flag) throws ParseException {         
+         return;         
      }
      
      boolean check_valid(Token token, String[] set) {
@@ -338,10 +335,10 @@ public final class Parser {
                      "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~"               
      };
 	
-	public Parser(Tokenizer te, Stack<String> tokenStack, boolean DEBUG) throws ParseException {
+	public Parser(Tokenizer te, boolean DEBUG) throws ParseException {
 		 this.te = te;
-		 this.tokenStack = tokenStack;
 		 this.DEBUG = DEBUG;
+		 tokenStack = new Stack<String>();
 		 
 		 rexp();
 	}

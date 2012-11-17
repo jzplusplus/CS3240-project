@@ -8,10 +8,12 @@ import java.util.Stack;
 
 public class ParserToStack {
 	private ArrayList<Stack<String>> stacks;
+	private ArrayList<ArrayList<String>> qs;
 	private ArrayList<String> ids;
 	
 	public ParserToStack(String filepath, boolean DEBUG) throws FileNotFoundException, ParseException{
 		stacks = new ArrayList<Stack<String>>();
+		qs = new ArrayList<ArrayList<String>>();
 		ids = new ArrayList<String>();
 		
         System.out.println("---------- Recursive Descent Parsing Began... ");
@@ -26,8 +28,9 @@ public class ParserToStack {
                     	throw new ParseException("Invalid syntax.");
                     }                  
                     ids.add((String) id.getValue());
-                    Parser ps = new Parser(input, new Stack<String>(), DEBUG);
+                    Parser ps = new Parser(input, new Stack<String>(), new ArrayList<String>(), DEBUG);
                     stacks.add(ps.getTokenStack());
+                    qs.add(ps.getTokenQ());
                 }
         } while(input.gotoNextLine());
         
@@ -45,7 +48,21 @@ public class ParserToStack {
 	            i++;
 	        }
 	        
+	        i = 0;
+	        for(ArrayList<String> q: qs){
+		        System.out.println("---------- Found a New Q: " + ids.get(i));
+	        	for(String str: q){
+	        		System.out.print(str);
+	        		System.out.print(",");
+	        	}
+	        	System.out.println();
+	        	i++;
+	        }	        
         }        
+	}
+	
+	public ArrayList<ArrayList<String>> getQs(){
+		return qs;
 	}
 	
 	public ArrayList<Stack<String>> getStacks(){
