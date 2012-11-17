@@ -245,6 +245,14 @@ public final class Parser {
 		}else {
 			range = char_set_list(new ArrayList<Character>());
 		}
+		
+		if(DEBUG){
+			System.out.println("Chars in Range.");
+			for(char c: range){
+				System.out.print(c);
+				System.out.println();
+			}
+		}
 	}
 	
 	// <char-set-list> -> <char-set> <char-set-list> | ]
@@ -272,6 +280,7 @@ public final class Parser {
 		match((String)ahead.getValue());
 		
 		if(!check_valid(ahead, CLS_CHAR)) {
+			System.out.println("ahead was not CLS_CHAR: " + ahead.getValue());
 			throw new ParseException();
         }
                
@@ -285,14 +294,15 @@ public final class Parser {
 				System.out.println(RegexTokenType.LEX_DASH);
 			tokenStack.push(RegexTokenType.LEX_DASH);
             match(RegexTokenType.LEX_DASH);
-            match((String)ahead.getValue());
+            //match((String)ahead.getValue());
             
             Token end = ahead; // HOW TO ADD RANGE?*
             if(DEBUG)
             	System.out.println((String)end.getValue());
             
             if(!check_valid(end, CLS_CHAR)) {
-                    throw new ParseException();
+            	System.out.println("end was not CLS_CHAR: " + end.getValue());
+            	throw new ParseException();
             }
     
             int start_index;
@@ -335,6 +345,7 @@ public final class Parser {
 			 System.out.println(RegexTokenType.LEX_UP);
 		 tokenStack.push(RegexTokenType.LEX_UP);
          match(RegexTokenType.LEX_UP); 
+         
          ArrayList<Character> exclude = char_set(new ArrayList<Character>());
          
          if(DEBUG)

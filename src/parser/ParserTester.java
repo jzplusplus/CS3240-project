@@ -21,7 +21,7 @@ public class ParserTester {
 		try {
 			ps = new Parser();
 			
-			String[] inputs = {" $IDENTIFIER $LOWER ($LOWER|$DIGIT)* "};
+			String[] inputs = {" [^A-Z] "};
 			
 			for(String expression : inputs) {
 				System.out.println("----------------------------- Parsing began ");				
