@@ -28,7 +28,11 @@ public class TableWalker {
 	{
 		String currentToken = "";
 		Token longestValidToken = null;
-		List<String> validTypes = new ArrayList<String>(types.keySet());
+		
+		for(DFA dfa: types.values())
+		{
+			dfa.reset();
+		}
 		
 		while(true)
 		{
@@ -65,32 +69,18 @@ public class TableWalker {
 				}
 			}
 			
-			List<String> tempTypes = new ArrayList<String>(validTypes);
 			currentToken += next;
-			for(String type: tempTypes)
+			for(String type: types.keySet())
 			{
 				DFA currentDFA = types.get(type);
-				try
-				{
-					State state = currentDFA.doTransition(next);
+				
+				State state = currentDFA.doTransition(next);
 					
-					if(state.isAccepting())
-					{
-						longestValidToken = new Token(type, currentToken);
-					}
-				}
-				catch(NullPointerException e)
+				if(state.isAccepting())
 				{
-					validTypes.remove(type);
+					longestValidToken = new Token(type, currentToken);
 				}
 			}
-			
-			if(validTypes.size()==0) break;
-		}
-		
-		for(DFA dfa: types.values())
-		{
-			dfa.reset();
 		}
 		
 		if(longestValidToken == null)
