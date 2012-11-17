@@ -3,20 +3,12 @@ package parser;
 import java.util.regex.Pattern;
 
 public enum RegexTokenType implements TokenType {
-	
-	// Token types
-	CLS_CHAR(/*[^([\\\\] | [\\^] | [\\-] | [\\[] | [\\]])]" + 
-			 "[ [\\\\\\\\] | [\\\\\\^] | [\\\\\\-] | [\\\\\\[] | [\\\\\\]] ]*/"Commented Out"),
-	RE_CHAR(/*[^([\\\\s]|[\\\\]|[\\*]|[\\+]|[\\?]|[\\[]|[\\]]|[\\(]|[\\)]|[\\.]|[\\']|[\\\"])]" + 
-			"[ [\\\\] | [\\\\\\\\] | [\\\\\\*] | [\\\\\\+] | [\\\\\\?] | [\\\\\\|] | [\\\\\\[] | [\\\\\\]] | [\\\\\\(] | [\\\\\\)] | [\\\\\\.] | [\\\\\\'] | [\\\\\\\"] ]*/"Commented Out"),
-	
+
 	TOKEN_IN("IN"),
 	
-	TOKEN_UPPER("[A-Z]"),
-	TOkEN_LOWER("[a-z]"),	
-	TOKEN_DIGIT("[0-9]"),
+	TOKEN_LITERAL("[A-Za-z]"),
+	TOKEN_DEFINED("\\$"),
 	
-	TOKEN_DOLLAR("\\$"),
 	TOKEN_EQUALS("\\="),
 	TOKEN_PLUS("\\+"),
 	TOKEN_DASH("\\-"),

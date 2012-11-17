@@ -1,6 +1,7 @@
 package parser;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class ParserTester {
 
@@ -9,7 +10,7 @@ public class ParserTester {
 	 */
 	public static void main(String[] args) {
 		
-		ArrayList<Tree<String>> trees = new ArrayList<Tree<String>>();
+		ArrayList<Stack> stacks = new ArrayList<Stack>();
 		 
 		// Input from a text file
 		//FileToInput fti = new FileToInput("sample_spec.txt");
@@ -20,12 +21,18 @@ public class ParserTester {
 		try {
 			ps = new Parser();
 			
-			String[] inputs = {" IN * | ( )", "( )*"};
+			String[] inputs = {" $IDENTIFIER $LOWER ($LOWER|$DIGIT)* "};
 			
 			for(String expression : inputs) {
-				System.out.println("----------------------------- Parsing began...");				
-				trees.add(ps.parse(expression)); // Add Tree(s)
+				System.out.println("----------------------------- Parsing began ");				
+				stacks.add(ps.parse(expression)); // Add Tree(s)
 			}
+			
+			Stack temp = stacks.get(0);
+            while ( !temp.empty() ) {
+            	System.out.print ( temp.pop() );
+                System.out.print ( ", " );
+            }
 
 		} catch(ParseException e) {
 			throw new RuntimeException("Parse error.", e);
