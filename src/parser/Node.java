@@ -1,13 +1,12 @@
 package parser;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Node<T> {
 	
     private T data;
     private Node<T> parent;
-    private List<Node<T>> children;
+    private ArrayList<Node<T>> children;
     
     public Node(T data, Node<T> parent){
     	this.data = data;
@@ -33,7 +32,7 @@ public class Node<T> {
     	return true;
     }
     
-    public List<Node<T>> getChildren(){
+    public ArrayList<Node<T>> getChildren(){
     	return children;        	
     }
     
@@ -45,7 +44,7 @@ public class Node<T> {
     	this.parent = parent;
     }
     
-    public void setChildren(List<Node<T>> children){
+    public void setChildren(ArrayList<Node<T>> children){
     	this.children = children;        	
     }
     

@@ -9,53 +9,46 @@ public class Tokenizer {
     private Token current;
     
     /**
-     * setup lexer for given scanner input
-     * @param input scanner to tokenize from
+     * @param scanner
      */
     public Tokenizer(Scanner scanner) {
-            this.input_stream = new FileToInput(scanner);
-            this.peek = false;
-            this.current = null;
+    	this.input_stream = new FileToInput(scanner);
+        this.peek = false;
+        this.current = null;
     }
 
-    /**
-     * get the next token in the stream
-     * @return next token in stream
+    /**m
+     * @return 
      */
     public Token getNextToken() {
-            if(peek) {
-                    peek = false;
-                    return current;
-            }
-            else {
-                    current = makeNewToken();
-                    return current;
-            }
+    	if(peek) {
+    		peek = false;
+            return current;
+        }
+        else {
+            current = makeNewToken();
+            return current;
+        }
     }
     
     /**
-     * peek at the next token in the stream
-     * @return next token in the stream
+     * @return
      */
     public Token peekNextToken() {
-            if(peek) {
-                    return current;
-            }
-            else {
-                    current = getNextToken();
-                    peek = true;
-                    return current;
-            }
+    	if(peek) {
+    		return current;
+        }
+        else {
+        	current = getNextToken();
+            peek = true;
+            return current;
+        }
     }
     
-    /**
-     * make a new token from the stream
-     * @return new token
-     */
     public Token makeNewToken() {
-            char t = input_stream.getNext();
+        char t = input_stream.getNext();
             
-            Token result = null;
+        Token result = null;
             
             switch(t) {
                     //ignore comment lines
@@ -83,7 +76,6 @@ public class Tokenizer {
 
                                     name += input_stream.getNext();
                             }
-                            //input_stream.getNext();//consume whitespace
                             result = new Token(TokenType.DEFINED, name);
                             break;
                     //alternation
@@ -98,15 +90,15 @@ public class Tokenizer {
                     case '+':
                             result = new Token(TokenType.PLUS, "+");
                             break;
-                    //dash (used when defining a range)
+                    //dash 
                     case '-':
                             result = new Token(TokenType.DASH, "-");
                             break;
-                    //caret (exclude set)
+                    //caret 
                     case '^':
                             result = new Token(TokenType.CARET, "^");
                             break;
-                    //dot (wild card)
+                    //dot
                     case '.':
                             result = new Token(TokenType.DOT, ".");
                             break;
@@ -118,30 +110,37 @@ public class Tokenizer {
                     case ']':
                             result = new Token(TokenType.RBRACKET, "]");
                             break;
-                    //left parentheses (scope out)
+                    //left parentheses 
                     case '(':
                             result = new Token(TokenType.LPAREN, "(");
                             break;
-                    //right parentheses (scope in)
+                    //right parentheses 
                     case ')':
                             result = new Token(TokenType.RPAREN, ")");
                             break;
-                    //IN (for defining ranges)
-                    case 'I':
-                            if(input_stream.peekNext() == 'N') {
-                                    result = new Token(TokenType.IN, "IN");
-                                    input_stream.getNext();
+                    //IN & I
+                    case 'I':                
+                    		FileToInput replace = new FileToInput(input_stream.getInput(), input_stream.getBuffer(), input_stream.getPos(), input_stream.getPeek());
+                    		input_stream.getNext();                    		
+                    	
+                    		if(input_stream.peekNext() == ' ') {
+                            	result = new Token(TokenType.IN, "IN");
+                            	replace.getNext();
+                        
+                    		}else if(input_stream.peekNext() != ' ') {
+                    			result = new Token(TokenType.LITERAL, new String() + 'I');
+                               
+            				}else {
+                                result = new Token(TokenType.LITERAL, "L");
                             }
-                            else {
-                                    result = new Token(TokenType.LITERAL, "L");
-                            }
+                    		input_stream = replace;
                             break;
                     //escaped characters
                     case '\\':
                             String escaped = "\\" + input_stream.getNext();
                             result = new Token(TokenType.LITERAL, escaped);
                             break;
-                    //everything else (character literals)
+                    //character literals
                     default:
                             result = new Token(TokenType.LITERAL, new String() + t);
             }
@@ -149,26 +148,18 @@ public class Tokenizer {
             return result;
     }
     
-    /**
-     * moves the stream to the next line of the file
-     * @return true: there is another line, false: end of file
-     */
     public boolean gotoNextLine() {
-            peek = false;
-            return input_stream.gotoNextLine();
+    	peek = false;
+        return input_stream.gotoNextLine();
     }
     
-    /**
-     *
-     * @return 
-     */
     public boolean validDefinedCharacters() {
-            int t = ((int)input_stream.peekNext());
-            if((t >= 48 && t <= 57) || (t >= 65 && t <= 90) || (t >= 97 && t <= 122) || (t == 45) || (t == 95)) {
-                    return true;
-            }
-            else {
-                    return false;
-            }
+        int t = ((int)input_stream.peekNext());
+        if((t >= 48 && t <= 57) || (t >= 65 && t <= 90) || (t >= 97 && t <= 122) || (t == 45) || (t == 95)) {
+        	return true;
+        }
+        else {
+            return false;
+        }
     }
 }

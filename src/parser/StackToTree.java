@@ -8,7 +8,6 @@ public class StackToTree {
 	private ArrayList<String> operands;	
 	
 	public StackToTree(ArrayList<Stack<String>> stacks, ArrayList<String> ids) {		
-		System.out.println("Stack To Tree");
 		
 		trees = new ArrayList<Tree<String>>();
 		operands = new ArrayList<String>();
@@ -30,43 +29,45 @@ public class StackToTree {
 	}
 	
 	private Tree<String> makeTree(String id, Stack<String> s) {		
-		System.out.println("makeTree");
+		
+		if(s.isEmpty())
+			return null;
 		
 		Tree<String> result = new Tree<String>(id);		
-		
-		Node<String> current = result.getRoot();
-		
-		while(!s.isEmpty()) {
-			String str = s.pop();
+
+		String str = s.pop();
+		System.out.println(str);
 			
-			if(operands.contains(str)){
-				makeTreeHelper(current, str, s).setParent(current);
-				System.out.println(str+ " added.");
+		if(operands.contains(str)){
+			Node<String> nd = new Node<String>(str, result.getRoot());
+			result.addChild(nd);
+			makeTreeHelper(nd, s);
 				
-			}else {
-				current.addChild(new Node<String>(str, current));
-				System.out.println(str+ " added.");
-			}			
-		}		
+		}else {
+			result.getRoot().addChild(new Node<String>(str, result.getRoot()));
+		}				
 		
 		return result;
 	}
 	
-	private Node<String> makeTreeHelper(Node<String> parent, String id, Stack<String> s) {
-		Node<String> current = parent;
-		while(!s.isEmpty()) {
-			String str = s.pop();
-			
-			if(operands.contains(str)){
-				makeTreeHelper(current, id, s).setParent(parent);
-				System.out.println(str+ " added.");
-			}else {
-				current.addChild(new Node<String>(str, parent));
-				System.out.println(str+ " added.");
-			}				
-		}
+	private Node<String> makeTreeHelper(Node<String> parent, Stack<String> s) {
 		
-		return current;			
+		if(s.isEmpty())
+			return null;
+		
+		String str = s.pop();
+		System.out.println(str);
+			
+		if(operands.contains(str)){
+			Node<String> nd = new Node<String>(str, parent);
+			parent.addChild(nd);
+			makeTreeHelper(nd, s);
+		
+		}else {
+			parent.addChild(new Node<String>(str, parent));
+		}				
+				
+		return parent;			
 	}
 		
 	public ArrayList<Tree<String>> getTrees(){

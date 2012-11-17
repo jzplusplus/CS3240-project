@@ -1,10 +1,7 @@
 package parser;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-//import java.util.Stack;
-import java.util.Scanner;
 import java.util.Stack;
 
 public class ParserTester {
@@ -27,8 +24,7 @@ public class ParserTester {
 		ArrayList<Tree<String>> trees = stt.getTrees();
 		
 		for(Tree<String> tree: trees) {
-			System.out.println("Print Tree");
-			stt.printTree(tree.getRoot());
+			//stt.printTree(tree.getRoot());
 		}
 	}
 	

@@ -18,22 +18,22 @@ public class ParserToStack {
         
         Tokenizer input = new Tokenizer(new Scanner(new File(filepath)));        
         do {
-                Token id = input.getNextToken();
-                if(id.getType() != TokenType.EOL) {
-                	if(DEBUG)
-                        System.out.println("----- Identifier found: " + id.getValue() + "...");
-                    if(id.getType() != TokenType.DEFINED) {
-                    	throw new ParseException("Invalid syntax.");
-                    }                  
-                    ids.add((String) id.getValue());
-                    Parser ps = new Parser(input, DEBUG);
-                    stacks.add(ps.getTokenStack());
-                }
+        	Token id = input.getNextToken();
+            if(id.getType() != TokenType.EOL) {
+            	if(DEBUG)
+            		System.out.println("----- Identifier found: " + id.getValue() + "...");
+                if(id.getType() != TokenType.DEFINED) {
+                	throw new ParseException("Invalid syntax.");
+                }                  
+                ids.add((String) id.getValue());
+                Parser ps = new Parser(input, DEBUG);
+                stacks.add(ps.getTokenStack());
+            }
         } while(input.gotoNextLine());
         
         System.out.println("---------- Parsing Succesfully Done...");
 
-        if(false) {
+        /*if(false) {
         	int i = 0;
 	        for(Stack<String> s: stacks){
 	        	System.out.println("---------- Found a New Stack: " + ids.get(i));
@@ -45,7 +45,7 @@ public class ParserToStack {
 	            i++;
 	        }
 	       
-        }        
+        }*/        
 	}
 
 	public ArrayList<Stack<String>> getStacks(){

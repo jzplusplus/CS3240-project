@@ -1,13 +1,12 @@
 package parser;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Tree<T> {
 	
     private Node<T> root;
     private T data;
-    private List<Node<T>> children;
+    private ArrayList<Node<T>> children;
 
     public Tree(T rootData) {
         root = new Node<T>(rootData, null);
@@ -37,7 +36,7 @@ public class Tree<T> {
     	return data;
     }
     
-    public List<Node<T>> getChildren(){
+    public ArrayList<Node<T>> getChildren(){
     	return children;
     }
     
@@ -45,7 +44,7 @@ public class Tree<T> {
     	this.data = data;
     }
     
-    public void setChildren(List<Node<T>> children){
+    public void setChildren(ArrayList<Node<T>> children){
     	this.children = children;
     }
     

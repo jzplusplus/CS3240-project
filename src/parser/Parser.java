@@ -13,7 +13,7 @@ public final class Parser {
 	boolean DEBUG;
 	
 	// <rexp> -> <rexp1> <rexp¡¯>
-	void rexp() throws ParseException {		
+	void rexp() throws ParseException {	
 		rexp1();
 		rexpPrime();
 
@@ -57,6 +57,7 @@ public final class Parser {
 		} else if(ahead.getType() == TokenType.LITERAL) {
 			boolean flag = check_valid(ahead, RE_CHAR);
 			if(!flag){
+				System.out.println(ahead.getValue() + " was Not Valied RE_CHAR.");
 				return;
 			}
 			rexp2();
@@ -101,8 +102,6 @@ public final class Parser {
 					System.out.println("LITERAL found. In rexp2.");
 				}
 				
-				//System.out.println(ahead.getValue());
-				
 				boolean flag = check_valid(ahead, RE_CHAR);
 				if(!flag) {
 					throw new ParseException();
@@ -112,6 +111,8 @@ public final class Parser {
 				tokenStack.push((String)ahead.getValue());
 				te.getNextToken(); 
 
+				//System.out.println("Next Token: " + te.peekNextToken().getValue());
+				
 				rexp2_tail();
 				
 			} else {
@@ -206,11 +207,15 @@ public final class Parser {
 	void char_set_list() throws ParseException {
 		Token ahead = te.peekNextToken();
 		if(ahead.getType() == TokenType.LITERAL || ahead.getType() == TokenType.DOT) {			
-			check_valid(ahead, CLS_CHAR);
+			if(!check_valid(ahead, CLS_CHAR))
+				return;
 			char_set();			
 			char_set_list();
 			
 		}else { 
+	        if(DEBUG)
+	        	System.out.println("]");
+			tokenStack.push("]");
 			return;
 		}
 
@@ -242,9 +247,10 @@ public final class Parser {
             te.getNextToken();
             
             Token end = te.getNextToken();
+            tokenStack.push((String)end.getValue());
             if(DEBUG)
             	System.out.println((String)end.getValue());
-            
+                  
             if(!check_valid(end, CLS_CHAR)) {
             	System.out.println("end was not CLS_CHAR: " + end.getValue());
             	throw new ParseException();
@@ -303,7 +309,7 @@ public final class Parser {
 
 	}
 	 
-    void defined_class(Token token, boolean flag) throws ParseException {         
+    void defined_class(Token token, boolean flag) throws ParseException {    
          return;         
      }
      
@@ -317,8 +323,8 @@ public final class Parser {
      }
      
      private static final String[] RE_CHAR = {
-                     "\\ ", "!", "\\\"", "#", "$", "%", "&", "\\\'", "\\(", "\\)", "\\*", "\\+", ",", "-", "\\.", "/",
-                     "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "\\?", 
+                     "\\ ", "!", "\\\"", "#", "$", "%", "&", "\\\'", "\\(", "\\)", "\\*", "\\+", ",", "-", 
+                     "\\.", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "<", "=", ">", "\\?", 
                      "@", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", 
                      "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "\\[", "\\\\", "\\]", "^", "_", 
                      "`", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", 
