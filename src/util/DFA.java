@@ -49,11 +49,6 @@ public class DFA {
 		// initializations
 		Set<Character> characterSet = nfa.getAllowableCharacters();
 
-		/*
-		Set<State> nfaStates = nfa.getAllStates();
-		if (!nfaStates.contains(startState)) nfaStates.add(startState); // might be unnecessary
-
-		 */
 		Set<State> startMembers = new HashSet<State>();
 		startMembers.addAll(nfa.getEpsilonClosure(startState));
 
@@ -71,42 +66,16 @@ public class DFA {
 			for (Character input : characterSet) {
 				if (input!=null) {
 					Set<State> epsTransitions = new HashSet<State>();
-					// Set<State> temp = null;
 					for (State s : is.getMemberStates()) {
 
-						/*
-						temp = getEpsilonClosure(s);	
-						if (temp!=null) {
-							epsTransitions.addAll(temp);
-							for (State epsFromS : temp) {
-								if (nfa.getTransition(epsFromS, input)!=null) {
-									epsTransitions.addAll(nfa.getTransition(epsFromS, input));
-									if (getEpsilonClosure(nfa.getTransition(epsFromS, input))!=null) {
-										epsTransitions.addAll(getEpsilonClosure(nfa.getTransition(epsFromS, input)));
-									}
-								}
-								
-							}
-						}
-
-						Set<State> onInput = nfa.getTransition(s, input); 
-						if (onInput!=null && !onInput.isEmpty()) {
-							epsTransitions.addAll(onInput);
-							epsTransitions.addAll(getEpsilonClosure(onInput));
-						}
-						*/
-						
-						
 						// reading before finding eps
 						Set<State> onInput = nfa.getTransition(s, input);
 						if (onInput!=null && !onInput.isEmpty()){
 							epsTransitions.addAll(onInput);
-							// epsTransitions.addAll(getEpsilonClosure(onInput));
 							
 							if (getEpsilonClosure(onInput)!=null) {
 								Set<State> epsStates = getEpsilonClosure(onInput);
 								if (epsStates!=null && !epsStates.isEmpty()) epsTransitions.addAll(epsStates);
-								
 							}
 						}
 						
@@ -116,17 +85,6 @@ public class DFA {
 					} // end for State
 
 					if (epsTransitions!=null && !epsTransitions.isEmpty()) {
-
-						/*
-						Set<State> stInput = new HashSet<State>();
-						for (State st : epsTransitions) {
-							stInput.addAll(nfa.getTransition(st, input));
-						}
-
-						if (stInput!=null && !stInput.isEmpty()) {
-							epsTransitions.addAll(stInput);
-						}
-						 */
 
 						IntermediateState newIstate = convertToIntermediateState(epsTransitions);
 
