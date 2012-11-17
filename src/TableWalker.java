@@ -14,15 +14,17 @@ import util.State;
 public class TableWalker {
 	
 	private FileReader reader;
+	private String backBuffer;
 	private Map<String, DFA> types;
 	
 	public TableWalker(String filepath, Map<String, DFA> types) throws FileNotFoundException
 	{
 		reader = new FileReader(filepath);
+		backBuffer = "";
 		this.types = types;
 	}
 	
-	public Token nextToken() throws IOException, BadTokenException
+	public Token nextToken() throws IOException, BadTokenException, EOFException
 	{
 		String currentToken = "";
 		Token longestValidToken = null;
@@ -30,30 +32,50 @@ public class TableWalker {
 		
 		while(true)
 		{
-			int nextInt = reader.read();
-			if(nextInt == -1) break;
+			char next;
+			if(backBuffer.isEmpty()) //no unused characters from last call
+			{
+				int nextInt = reader.read();
+				if(nextInt == -1)
+				{
+					if(!currentToken.isEmpty()) break;
+					else
+					{
+						throw new EOFException();
+					}
+				}
+				
+				next = (char)nextInt;
+			}
+			else 
+			{
+				next = backBuffer.charAt(0);
+				backBuffer = backBuffer.substring(1);
+			}
 			
-			char next = (char)nextInt;
 			if( (next == ' ') ||
 				(next == '\t') ||
 				(next == '\n') ||
 				(next == '\r') )
 			{
-				break;
+				if(!currentToken.isEmpty()) break;
+				else
+				{
+					continue;
+				}
 			}
 			
 			List<String> tempTypes = new ArrayList<String>(validTypes);
+			currentToken += next;
 			for(String type: tempTypes)
 			{
 				DFA currentDFA = types.get(type);
 				try
 				{
 					State state = currentDFA.doTransition(next);
-					currentToken += next;
+					
 					if(state.isAccepting())
 					{
-						reader.mark(255); //mark every time we find a new valid token, so we can reset to here later
-											//and put the unused characters back in the stream
 						longestValidToken = new Token(type, currentToken);
 					}
 				}
@@ -77,8 +99,8 @@ public class TableWalker {
 		}
 		else
 		{
-			reader.reset(); //only reset if we did find some token. Otherwise, we'd just end up looping on a
-							//bad character
+			int tokenLength = ((String)longestValidToken.getValue()).length();
+			backBuffer = currentToken.substring(tokenLength);
 			return longestValidToken;
 		}
 	}
