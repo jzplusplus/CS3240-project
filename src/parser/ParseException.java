@@ -1,5 +1,6 @@
 package parser;
 
+@SuppressWarnings("serial")
 public class ParseException extends Exception {	
 	public ParseException() { }
 

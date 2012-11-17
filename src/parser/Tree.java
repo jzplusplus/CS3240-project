@@ -10,7 +10,7 @@ public class Tree<T> {
     private List<Node<T>> children;
 
     public Tree(T rootData) {
-        root = new Node(rootData, null);
+        root = new Node<T>(rootData, null);
         data = rootData;
         children = new ArrayList<Node<T>>();
     }

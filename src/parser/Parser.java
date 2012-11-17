@@ -1,7 +1,6 @@
 package parser;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Stack;
 
 
@@ -11,25 +10,10 @@ import java.util.Stack;
 public final class Parser {
 
 	Tokenizer te;
-	transient Stack<String> tokenStack;
-	transient Token ahead;
+	Stack<String> tokenStack;
 	
-	boolean DEBUG = true;
-	boolean char_class = true;
-	boolean scope = false;
+	boolean DEBUG;
 	
-	void match(String token) throws ParseException {	
-		if(token == null || ahead.getValue().equals(token)) {
-			try {	    				    		
-	    		ahead = te.nextToken();
-	        } catch(TokenNotFoundException e) {
-	        	throw new ParseException(e);
-	        }
-	    } else {
-	    	throw new ParseException();
-	    }		
-	}
-
 	// <rexp> -> <rexp1> <rexp¡¯>
 	void rexp() throws ParseException {		
 		rexp1();
@@ -46,37 +30,33 @@ public final class Parser {
 	
 	// rexpPrime -> UNION <rexp1> <rexp¡¯> | E
 	void rexpPrime() throws ParseException {
-		
-		if(ahead!=null) {
-			
-			if(ahead.getType() == RegexTokenType.TOKEN_UNION) {				
-				if(DEBUG) {
-					System.out.println("UNION found. Not in char_class.");
-				}
-				
-				char_class = false;
-				if(DEBUG)
-					System.out.println(RegexTokenType.LEX_UNION);
-				tokenStack.push(RegexTokenType.LEX_UNION);
-			    match(RegexTokenType.LEX_UNION); 
-			    rexp1();
-			    rexpPrime();
-			    		
-			}else {
-				return;
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.UNION) {				
+			if(DEBUG) {
+				System.out.println("UNION found. Not in char_class.");
 			}
-			
+				
+			if(DEBUG)
+				System.out.println("|");
+			tokenStack.push("|");
+				te.getNextToken();
+			   rexp1();
+			   rexpPrime();
+			    		
+		}else {
+			return;
 		}
-		
+	
 	}
 	
 	// <rexp1¡¯> -> <rexp2> <rexp1¡¯>  | E        
-	void rexp1Prime() throws ParseException {		
-		if(ahead!=null && (ahead.getType() == RegexTokenType.TOKEN_L_PAREN || ahead.getType() == RegexTokenType.TOKEN_DOT || ahead.getType() == RegexTokenType.TOKEN_L_BRACKET || ahead.getType() == RegexTokenType.TOKEN_DEFINED)) {
+	void rexp1Prime() throws ParseException {	
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.LPAREN || ahead.getType() == TokenType.DOT || ahead.getType() == TokenType.LBRACKET || ahead.getType() == TokenType.DEFINED) {
 			rexp2();
 			rexp1Prime();		
 		
-		} else if(ahead!=null && ahead.getType() == RegexTokenType.TOKEN_LITERAL) {
+		} else if(ahead.getType() == TokenType.LITERAL) {
 			boolean flag = check_valid(ahead, RE_CHAR);
 			if(!flag){
 				return;
@@ -92,42 +72,38 @@ public final class Parser {
 	
 	// <rexp2> -> (<rexp>) <rexp2-tail>  | RE_CHAR <rexp2-tail> | <rexp3>
 	void rexp2() throws ParseException {
-		
+		Token ahead = te.peekNextToken();
 		if(ahead!=null) {
 		
-			if(ahead.getType() == RegexTokenType.TOKEN_L_PAREN) {
+			if(ahead.getType() == TokenType.LPAREN) {
 				if(DEBUG) {
-					System.out.println("L_PAREN found. Not in a char_class.");
+					System.out.println("L_PAREN found. In rexp2.");
 				}
-	
-				char_class = false;
+
 				if(DEBUG)
-					System.out.println(RegexTokenType.LEX_L_PAREN);
-				tokenStack.push(RegexTokenType.LEX_L_PAREN);
-				match(RegexTokenType.LEX_L_PAREN); 
-				
-				scope = true;
-				tokenStack.push("SCOPE_IN");
+					System.out.println("(");
+				tokenStack.push("(");
+				te.getNextToken();
+
 			    rexp();
-			    tokenStack.push("SCOPE_OUT");
 			    
 			    if(DEBUG)
-			    	System.out.println(RegexTokenType.LEX_R_PAREN);
-			    tokenStack.push(RegexTokenType.LEX_R_PAREN);
-			    match(RegexTokenType.LEX_R_PAREN); 
+			    	System.out.println(")");
+			    tokenStack.push(")");
+			    te.getNextToken();
 			    
 				if(DEBUG) {
-					System.out.println("PAREN successfully matched. Scope in.");
+					System.out.println("PAREN successfully matched.");
 				}
 			    
 				rexp2_tail();
 			    
-			}else if(ahead.getType() == RegexTokenType.TOKEN_LITERAL) {
+			}else if(ahead.getType() ==  TokenType.LITERAL) {
 				if(DEBUG) {
-					System.out.println("LITERAL found. Not in a char_class.");
+					System.out.println("LITERAL found. In rexp2.");
 				}
 				
-				char_class = false;
+				//System.out.println(ahead.getValue());
 				
 				boolean flag = check_valid(ahead, RE_CHAR);
 				if(!flag) {
@@ -136,10 +112,8 @@ public final class Parser {
 				if(DEBUG)
 					System.out.println((String)ahead.getValue());
 				tokenStack.push((String)ahead.getValue());
-				match((String)ahead.getValue()); 
-				
-				// ADD CONCAT HERE*
-				
+				te.getNextToken(); 
+
 				rexp2_tail();
 				
 			} else {
@@ -152,44 +126,26 @@ public final class Parser {
 	
 	// <rexp2-tail> -> * | + | E
 	void rexp2_tail() throws ParseException {		
-
-		if(ahead.getType() == RegexTokenType.TOKEN_ASTE) {
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.KLEENE) {
 			if(DEBUG) {
-				System.out.println(" * Found. Not in a char_class.");
+				System.out.println(" * Found. In rexp2_tail.");
 			}
 
-			char_class = false;
 			if(DEBUG)
-				System.out.println(RegexTokenType.LEX_ASTE);
-			tokenStack.push(RegexTokenType.LEX_ASTE);
-			match(RegexTokenType.LEX_ASTE); 
-			
-			if(scope) {
-				scope = false;
-				// Finalize Tree
-			}else {
+				System.out.println("^");
+			tokenStack.push("^");
+			te.getNextToken(); 
 				
-			}
-				
-		}else if(ahead.getType() == RegexTokenType.TOKEN_PLUS) {
+		}else if(ahead.getType() == TokenType.PLUS) {
 			if(DEBUG) {
-				System.out.println(" * Found. Not in a char_class.");
+				System.out.println(" * Found. In rexp2_tail.");
 			}
-			
-			// Add to Tree
-			
-			char_class = false;
+
 			if(DEBUG)
-				System.out.println(RegexTokenType.LEX_PLUS);
-			tokenStack.push(RegexTokenType.LEX_PLUS);
-			match(RegexTokenType.LEX_PLUS);
-			
-			if(scope) {
-				scope = false;
-				// Finalize Tree
-			}else {
-				
-			}
+				System.out.println("+");
+			tokenStack.push("+");
+			te.getNextToken(); 
 			
 		}else {
 				return;
@@ -199,7 +155,8 @@ public final class Parser {
 	
 	// <rexp3> -> <char-class>  | E   
 	void rexp3() throws ParseException {
-		if(ahead.getType() == RegexTokenType.TOKEN_DOT || ahead.getType() == RegexTokenType.TOKEN_L_BRACKET || ahead.getType() == RegexTokenType.TOKEN_DEFINED) {
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.DOT || ahead.getType() == TokenType.LBRACKET || ahead.getType() == TokenType.DEFINED) {
 			char_class();
 		
 		} else {
@@ -210,93 +167,83 @@ public final class Parser {
 	
 	// <char-class> -> .  |  [ <char-class1>  | <defined-class>
 	void char_class() throws ParseException {
-		
-		if(ahead.getType() == RegexTokenType.TOKEN_DOT) {
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.DOT) {
 			if(DEBUG)
-				System.out.println(RegexTokenType.LEX_DOT);
-			tokenStack.push(RegexTokenType.LEX_DOT);
-			match(RegexTokenType.LEX_DOT);
+				System.out.println(".");
+			tokenStack.push(".");
+			te.getNextToken();
 		
-		}else if(ahead.getType() == RegexTokenType.TOKEN_L_BRACKET) {
+		}else if(ahead.getType() == TokenType.LBRACKET) {
 			if(DEBUG)
-				System.out.println(RegexTokenType.LEX_L_BRACKET);
-			tokenStack.push(RegexTokenType.LEX_L_BRACKET);
-			match(RegexTokenType.LEX_L_BRACKET);
+				System.out.println("[");
+			tokenStack.push("[");
+			te.getNextToken();
 			char_class1();	
 
 		}else { // defined_class
 			if(DEBUG)
 				System.out.println((String) ahead.getValue());
 			tokenStack.push((String) ahead.getValue());
-			match((String) ahead.getValue());
+			te.getNextToken();
 			defined_class(ahead, false);
 		}
 		
 		return;
 	}
 	
-	// ** <char-class1> -> <char-set-list> | <exclude-set>
+	// <char-class1> -> <char-set-list> | <exclude-set>
 	void char_class1() throws ParseException {
-		ArrayList<Character> range;
-		
-		if(ahead.getType() == RegexTokenType.TOKEN_UP) {
-			range = exclude_set(new ArrayList<Character>());		
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.CARET) {
+			exclude_set();		
 			
 		}else {
-			range = char_set_list(new ArrayList<Character>());
+			char_set_list();
 		}
-		
-		if(DEBUG){
-			System.out.println("Chars in Range.");
-			for(char c: range){
-				System.out.print(c);
-				System.out.println();
-			}
-		}
+
 	}
 	
 	// <char-set-list> -> <char-set> <char-set-list> | ]
-	ArrayList<Character> char_set_list(ArrayList<Character> range) throws ParseException {
-		if(ahead.getType() == RegexTokenType.TOKEN_LITERAL || ahead.getType() == RegexTokenType.TOKEN_DOT) {
-			
-			boolean flag = check_valid(ahead, CLS_CHAR);
-			if(!flag) {
-				return range;
-			}
-			range = char_set(range);
-			return char_set_list(range);
+	void char_set_list() throws ParseException {
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.LITERAL || ahead.getType() == TokenType.DOT) {			
+			check_valid(ahead, CLS_CHAR);
+			char_set();			
+			char_set_list();
 			
 		}else { 
-			return range;
+			return;
 		}
 
 	}
 	
 	// <char-set> -> CLS_CHAR <char-set-tail> 
-	ArrayList<Character> char_set(ArrayList<Character> range) throws ParseException {	
+	void char_set() throws ParseException {	
+		Token ahead = te.peekNextToken();
 		if(DEBUG)
 			System.out.println((String)ahead.getValue());
-		tokenStack.push((String) ahead.getValue());
-		match((String)ahead.getValue());
+		tokenStack.push((String)ahead.getValue());
+		te.getNextToken();
 		
 		if(!check_valid(ahead, CLS_CHAR)) {
 			System.out.println("ahead was not CLS_CHAR: " + ahead.getValue());
 			throw new ParseException();
         }
                
-        return char_set_tail(ahead, range);
+        char_set_tail(ahead);
 	}
 	
 	// <char-set-tail> -> - CLS_CHAR | E
-	ArrayList<Character> char_set_tail(Token start, ArrayList<Character> range) throws ParseException {		
-		if(ahead.getType() == RegexTokenType.TOKEN_DASH) {
+	void char_set_tail(Token start) throws ParseException {	
+		Token ahead = te.peekNextToken();
+		if(ahead.getType() == TokenType.DASH) {
 			if(DEBUG)
-				System.out.println(RegexTokenType.LEX_DASH);
-			tokenStack.push(RegexTokenType.LEX_DASH);
-            match(RegexTokenType.LEX_DASH);
-            //match((String)ahead.getValue());
+				System.out.println("-");
+			tokenStack.push("-");
+            te.getNextToken();
             
-            Token end = ahead; // HOW TO ADD RANGE?*
+            Token end = te.getNextToken();
             if(DEBUG)
             	System.out.println((String)end.getValue());
             
@@ -304,92 +251,56 @@ public final class Parser {
             	System.out.println("end was not CLS_CHAR: " + end.getValue());
             	throw new ParseException();
             }
-    
-            int start_index;
-            int end_index;
-            if(((String)start.getValue()).charAt(0) == '\\') {
-            	start_index = ((int)((String)start.getValue()).charAt(1)) - 32;
-            }else {
-                start_index = ((int)((String)start.getValue()).charAt(0)) - 32;
-            }
-            
-            if(((String)end.getValue()).charAt(0) == '\\') {
-                end_index = ((int)((String)end.getValue()).charAt(1)) -32;
-            } else {
-            	end_index = ((int)((String)end.getValue()).charAt(0)) - 32;
-            }
-            
-            int current_index = start_index;
-            while(current_index <= end_index) {
-            	range.add(((char)(current_index + 32)));
-                current_index++;
-            }
-        
-            return range;
+   		
 		}
-		else {
-			if(((String)start.getValue()).charAt(0) == '\\') {
-				range.add(((String)start.getValue()).charAt(1));
-            }else {
-                range.add(((String)start.getValue()).charAt(0));
-            }
-            
-			return range;
-		}
-		
 	}
 	
 	// <exclude-set> -> ^ <char-set>] IN <exclude-set-tail>  
-	 ArrayList<Character> exclude_set(ArrayList<Character> range) throws ParseException {
+	void exclude_set() throws ParseException {
 		 if(DEBUG)
-			 System.out.println(RegexTokenType.LEX_UP);
-		 tokenStack.push(RegexTokenType.LEX_UP);
-         match(RegexTokenType.LEX_UP); 
+			 System.out.println("^");
+		 tokenStack.push("^");
+         te.getNextToken();
          
-         ArrayList<Character> exclude = char_set(new ArrayList<Character>());
-         
-         if(DEBUG)
-        	 System.out.println(RegexTokenType.LEX_R_BRACKET);
-         tokenStack.push(RegexTokenType.LEX_R_BRACKET);
-         match(RegexTokenType.LEX_R_BRACKET); 
-         tokenStack.push("SCOPE_OUT");        
+        char_set();
          
          if(DEBUG)
-        	 System.out.println(RegexTokenType.LEX_IN);
-         tokenStack.push(RegexTokenType.LEX_IN);
-         match(RegexTokenType.LEX_IN);
-         ArrayList<Character> in = exclude_set_tail();
+        	 System.out.println("]");
+         tokenStack.push("]");
+         te.getNextToken();
+         //tokenStack.push("SCOPE_OUT");        
          
-         for(int i = 0; i < in.size(); i++) {
-        	 if(!exclude.contains(in.get(i))) {
-        		 range.add(in.get(i));
-             }
-         }
-         	
-         return range;
+         if(DEBUG)
+        	 System.out.println(TokenType.IN);
+         tokenStack.push("IN");
+         te.getNextToken();
+         exclude_set_tail();
+
 	}
 	
 	// <exclude-set-tail> -> [<char-set>]  | <defined-class>
-	 ArrayList<Character> exclude_set_tail() throws ParseException {
-		 if(ahead.getType() == RegexTokenType.TOKEN_L_BRACKET) {
+	 void exclude_set_tail() throws ParseException {
+		 Token ahead = te.peekNextToken();
+		 if(ahead.getType() == TokenType.LBRACKET) {
 			 if(DEBUG)
-				 System.out.println(RegexTokenType.LEX_L_BRACKET);
-			 tokenStack.push(RegexTokenType.LEX_L_BRACKET);
-			 match(RegexTokenType.LEX_L_BRACKET);
-			 tokenStack.push("SCOPE_OUT");
-             ArrayList<Character> range = char_set(new ArrayList<Character>());
+				 System.out.println(TokenType.LBRACKET);
+			 tokenStack.push("[");
+			 te.getNextToken();
+			 
+             char_set();
+             
              if(DEBUG) 
-            	 System.out.println(RegexTokenType.LEX_R_BRACKET);
-             tokenStack.push(RegexTokenType.LEX_R_BRACKET);
-             match(RegexTokenType.LEX_R_BRACKET);
-             return range;
+            	 System.out.println("]");
+             tokenStack.push("]");
+             te.getNextToken();
+
          }else {
         	 if(DEBUG)
         		 System.out.println((String)ahead.getValue());
         	 tokenStack.push((String)ahead.getValue());
-        	 match((String)ahead.getValue());
-             ArrayList<Character> range = defined_class(ahead, true);
-             return range;
+        	 te.getNextToken();
+             defined_class(ahead, true);
+
          }
 
 	}
@@ -427,28 +338,16 @@ public final class Parser {
                      "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~"               
      };
 	
-	public Parser() {
-	    te = new Tokenizer(Arrays.asList((TokenType[])RegexTokenType.values()));
+	public Parser(Tokenizer te, Stack<String> tokenStack, boolean DEBUG) throws ParseException {
+		 this.te = te;
+		 this.tokenStack = tokenStack;
+		 this.DEBUG = DEBUG;
+		 
+		 rexp();
 	}
-
-	public Stack<String> parse(String input) throws ParseException {
-	    te.setInput(input); 
-
-	    match(null);
-
-	    if(ahead == null) {
-	      throw new ParseException();
-	    }
-
-	    tokenStack = new Stack<String> ();
-
-	    rexp();
-
-	    if(ahead != null) {
-	      throw new ParseException();
-	    }
-
-	    return tokenStack;
+	
+	public Stack<String> getTokenStack(){
+		return tokenStack;
 	}
 	
 }
