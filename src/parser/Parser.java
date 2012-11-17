@@ -1,6 +1,5 @@
 package parser;
 
-import java.util.ArrayList;
 import java.util.Stack;
 
 /**
@@ -10,7 +9,7 @@ public final class Parser {
 
 	Tokenizer te;
 	Stack<String> tokenStack;
-	
+
 	boolean DEBUG;
 	
 	// <rexp> -> <rexp1> <rexp¡¯>

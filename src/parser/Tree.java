@@ -23,6 +23,16 @@ public class Tree<T> {
     	this.root = root;
     }
     
+    public void addChild(Node<T> child){
+    	children.add(child);
+    }
+    
+    public boolean hasChild() {
+    	if(children.isEmpty())
+    		return false;
+    	return true;
+    }
+    
     public T getData(){
     	return data;
     }

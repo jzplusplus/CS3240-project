@@ -1,5 +1,6 @@
 package parser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Node<T> {
@@ -11,6 +12,7 @@ public class Node<T> {
     public Node(T data, Node<T> parent){
     	this.data = data;
     	this.parent = parent;
+    	children = new ArrayList<Node<T>>();
     }
     
     public T getData(){
@@ -19,6 +21,16 @@ public class Node<T> {
     
     public Node<T> getParent(){
     	return parent;
+    }
+    
+    public void addChild(Node<T> child){
+    	children.add(child);
+    }
+    
+    public boolean hasChild() {
+    	if(children.isEmpty())
+    		return false;
+    	return true;
     }
     
     public List<Node<T>> getChildren(){

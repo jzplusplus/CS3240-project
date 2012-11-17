@@ -1,112 +1,86 @@
 package parser;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class StackToTree {	
 	private ArrayList<Tree<String>> trees;
+	private ArrayList<String> operands;	
+	
+	public StackToTree(ArrayList<Stack<String>> stacks, ArrayList<String> ids) {		
+		System.out.println("Stack To Tree");
 		
-	public StackToTree(ArrayList<ArrayList<String>> qs, ArrayList<String> ids) {		
 		trees = new ArrayList<Tree<String>>();
+		operands = new ArrayList<String>();
+		
+		operands.add("|");
+		operands.add("*");
+		operands.add("+");
+		operands.add("-");
+		operands.add("^");
+		operands.add(".");
+		operands.add("(");
+		operands.add(")");
+		operands.add("[");
+		operands.add("]");
 		
 		for(int i=0; i<ids.size(); i++){
-			trees.add(makeTree(ids.get(i), qs.get(i)));			
+			trees.add(makeTree(ids.get(i), stacks.get(i)));			
 		}		
 	}
 	
-	private Tree<String> makeTree(String id, ArrayList<String> q) {		
+	private Tree<String> makeTree(String id, Stack<String> s) {		
+		System.out.println("makeTree");
 		
-		int index = 0;
-		Tree<String> result = new Tree<String>(id);
+		Tree<String> result = new Tree<String>(id);		
+		
 		Node<String> current = result.getRoot();
 		
-		while(!q.isEmpty()) {  
-			index = findNext(q);
+		while(!s.isEmpty()) {
+			String str = s.pop();
 			
-			if(q.get(index).equals("(") || q.get(index).equals("[")) {
-				ArrayList<String> cut = ListCut(q, index+1, findEndIndex(q.get(index), index, q)-1);
-				if(current.getL()==null)
-					current.setL(makeTree("PAREN", cut).getRoot());
-				else if(current.getR()==null)
-					current.setR(makeTree("PAREN", cut).getRoot());
-				
-				q.remove(index);
-				q.remove(findEndIndex(q.get(index), index, q));
+			if(operands.contains(str)){
+				makeTreeHelper(current, str, s).setParent(current);
+				System.out.println(str+ " added.");
 				
 			}else {
-				Node<String> nd = new Node<String>(q.get(0), current);
-				Node<String> nd = new Node<String>(q.get(1), current);
-				
-				
-			}
-		}
+				current.addChild(new Node<String>(str, current));
+				System.out.println(str+ " added.");
+			}			
+		}		
 		
 		return result;
 	}
 	
-	private ArrayList<String> ListCut(ArrayList<String> q, int start, int end) {
-		ArrayList<String> temp = new ArrayList<String>();
-		for(int i=start; i<=end; i++) {
-			temp.add(q.get(i));
-		}
-		
-		return temp;
-	}
-	
-	private int findEndIndex(String s, int start, ArrayList<String> q) {
-		int end = q.size() - 1; // By default
-		
-		for(String str: q){
-			if(s.equals("(") && str.equals(")"))
-				end = q.indexOf(str);
-			else if(s.equals("[") && str.equals("]"))
-				end = q.indexOf(str);			
-		}
-		
-		return end;
-	}
-	
-	private int findNext(ArrayList<String> q) {
-		int index = 0;
-		int highestPrec = 0;
-		int currentPrec = 0;
-		
-		String str;
-		for(int i=0; i<q.size(); i++) {
-			str = q.get(i);
+	private Node<String> makeTreeHelper(Node<String> parent, String id, Stack<String> s) {
+		Node<String> current = parent;
+		while(!s.isEmpty()) {
+			String str = s.pop();
 			
-			switch(str) {
-				case "(":
-					currentPrec = 3;
-				case "[":
-					currentPrec = 3;
-				case "|":
-					currentPrec = 1;
-				case "-":
-					currentPrec = 1;
-				case "*":
-					currentPrec = 2;
-				case "+":
-					currentPrec = 1;
-				case "^":
-					currentPrec = 2;
-				case ".":
-					currentPrec = 1;
-			}
-			
-			if(currentPrec > highestPrec){
-				highestPrec = currentPrec;
-				index = i;
-			}			
+			if(operands.contains(str)){
+				makeTreeHelper(current, id, s).setParent(parent);
+				System.out.println(str+ " added.");
+			}else {
+				current.addChild(new Node<String>(str, parent));
+				System.out.println(str+ " added.");
+			}				
 		}
-				
-		return index;
+		
+		return current;			
 	}
-	
+		
 	public ArrayList<Tree<String>> getTrees(){
 		return trees;
 	}
-
 	
-	
+	public void printTree(Node<String> head) {
+		if(head.hasChild()) {
+			for(Node<String> child: head.getChildren()) {
+				printTree(child);
+			}
+		}else {
+			System.out.println("Parent: " + head.getParent().getData() + " / Current Node: " + head.getData());			
+		}		
+	}
 	
 }
