@@ -1,1 +1,4 @@
 CS 3240 Project 1
+
+Unfortunately, since we never got our recursive descent parser working, our program won't run on the input file.
+You can run the Test classes to verify that the independent modules of our code are working to an extent.
