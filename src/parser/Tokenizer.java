@@ -76,6 +76,7 @@ public class Tokenizer {
 
                                     name += input_stream.getNext();
                             }
+                            //System.out.println(input_stream.peekNext());
                             result = new Token(TokenType.DEFINED, name);
                             break;
                     //alternation
@@ -88,6 +89,7 @@ public class Tokenizer {
                             break;
                     //repetition > 0
                     case '+':
+                    		//System.out.println("PLUS");
                             result = new Token(TokenType.PLUS, "+");
                             break;
                     //dash 

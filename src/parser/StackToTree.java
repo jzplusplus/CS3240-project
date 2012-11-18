@@ -36,7 +36,7 @@ public class StackToTree {
 		Tree<String> result = new Tree<String>(id);		
 
 		String str = s.pop();
-		System.out.println(str);
+		//System.out.println(str);
 			
 		if(operands.contains(str)){
 			Node<String> nd = new Node<String>(str, result.getRoot());

@@ -114,6 +114,9 @@ public final class Parser {
 				//System.out.println("Next Token: " + te.peekNextToken().getValue());
 				
 				rexp2_tail();
+			}else if(ahead.getType() ==  TokenType.PLUS) {
+				System.out.println("PASS");
+				rexp2_tail();
 				
 			} else {
 				rexp3();
@@ -131,18 +134,14 @@ public final class Parser {
 				System.out.println(" * Found. In rexp2_tail.");
 			}
 
-			if(DEBUG)
-				System.out.println("*");
 			tokenStack.push("*");
 			te.getNextToken(); 
 				
 		}else if(ahead.getType() == TokenType.PLUS) {
 			if(DEBUG) {
-				System.out.println(" * Found. In rexp2_tail.");
+				System.out.println(" + Found. In rexp2_tail.");
 			}
 
-			if(DEBUG)
-				System.out.println("+");
 			tokenStack.push("+");
 			te.getNextToken(); 
 			
