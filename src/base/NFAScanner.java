@@ -1,3 +1,4 @@
+package base;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -15,9 +16,9 @@ import java.util.Set;
 import java.util.Stack;
 
 import parser.Token;
-
 import util.NFA;
 import util.State;
+import exception.BadTokenException;
 
 public class NFAScanner {
 

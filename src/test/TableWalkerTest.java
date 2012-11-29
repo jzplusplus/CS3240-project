@@ -1,15 +1,18 @@
+package test;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+
+import base.TableWalker;
 
 import parser.Token;
-
 import util.DFA;
 import util.NFA;
 import util.State;
+import exception.BadTokenException;
+import exception.EOFException;
 
 public class TableWalkerTest {
 

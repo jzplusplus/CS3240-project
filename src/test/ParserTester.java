@@ -1,4 +1,4 @@
-package parser;
+package test;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import exception.ParseException;
+
+import parser.ParseTree;
+import parser.RegexParser;
 
 public class ParserTester {
 
@@ -36,18 +39,7 @@ public class ParserTester {
         		System.out.println(e.getMessage());
         	}
         }
-//		boolean DEBUG = true;
-//		
-//		ParserToStack pts = new ParserToStack(filepath, DEBUG);
-//		ArrayList<Stack<String>> stacks = pts.getStacks();
-//		ArrayList<String> ids = pts.getIds();
-//		
-//		StackToTree stt = new StackToTree(stacks, ids);
-//		ArrayList<Tree<String>> trees = stt.getTrees();
-//		
-//		for(Tree<String> tree: trees) {
-//			//stt.printTree(tree.getRoot());
-//		}
+
 	}
 	
 }	

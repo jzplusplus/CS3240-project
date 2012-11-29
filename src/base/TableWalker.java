@@ -1,14 +1,14 @@
+package base;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import parser.Token;
-
 import util.DFA;
 import util.State;
+import exception.BadTokenException;
+import exception.EOFException;
 
 
 public class TableWalker {

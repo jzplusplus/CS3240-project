@@ -1,10 +1,13 @@
+package test;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import parser.Token;
+import base.NFAScanner;
 
+import parser.Token;
 import util.NFA;
+import exception.BadTokenException;
 
 public class NFAScannerTest {
     public static void main(String[] args) throws IOException, BadTokenException {
