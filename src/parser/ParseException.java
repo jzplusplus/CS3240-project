@@ -1,7 +1,11 @@
 package parser;
 
-@SuppressWarnings("serial")
 public class ParseException extends Exception {	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 3549416292529404463L;
+
 	public ParseException() { }
 
 	public ParseException(String message) {
