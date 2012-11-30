@@ -53,6 +53,13 @@ public class ParseTree {
 		addChildren(child);
 	}
 	
+	public ParseTree getChild(int index) {
+		if (!hasChildren()) {
+			return null;
+		}
+		return getChildren().get(index);
+	}
+	
 	public void print() {
 		print(0);
 	}

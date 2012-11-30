@@ -1,6 +1,7 @@
 package util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -236,14 +237,18 @@ public class NFA {
                 sb.append("(S)");
             }
             sb.append(" {");
-            for (Entry<Character, Set<State>> transition : transitionTable.get(input).entrySet()) {
-                if (transition.getKey() == EPSILON) {
+            // TODO sort by input
+            List<Character> sortedTransitionChars = new ArrayList<Character>(transitionTable.get(input).keySet());
+            Collections.sort(sortedTransitionChars);
+            for (Character transitionChar : sortedTransitionChars) {
+            	Set<State> transitionStates = transitionTable.get(input).get(transitionChar);
+                if (transitionChar == EPSILON) {
                     sb.append("epsilon");
                 } else {
-                    sb.append(transition.getKey());
+                    sb.append(transitionChar);
                 }
                 sb.append(": {");
-                for (State s : transition.getValue()) {
+                for (State s : transitionStates) {
                     sb.append(s.getName());
                     if (s.isAccepting()) {
                         sb.append("*");
@@ -259,6 +264,27 @@ public class NFA {
         }
         sb.append(">");
         return sb.toString();
+    }
+    
+    
+    public static NFA acceptAll() {
+    	// yes, we could just do a billion unions, but that's stupid!
+    	Set<Character> allChars = new HashSet<Character>();
+    	for (int i = 32; i <= 126; i++) {
+    		allChars.add((char)i);
+    	}
+    	return acceptSet(allChars);
+    }
+    
+    public static NFA acceptSet(Collection<Character> chars) {
+    	// yes, we could just do a billion unions, but that's stupid!
+    	State start = new State();
+    	State end = new State(true);
+    	NFA nfa = new NFA();
+    	for (Character c : chars) {
+    		nfa.withTransition(start, c, end);
+    	}
+    	return nfa.withStartState(start);
     }
     
     public NFA clone() {
