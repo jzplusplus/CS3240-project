@@ -75,7 +75,9 @@ public class TableWalker {
 				DFA currentDFA = types.get(type);
 				
 				State state = currentDFA.doTransition(next);
-					
+				if (state == null) {
+					continue;
+				}
 				if(state.isAccepting())
 				{
 					longestValidToken = new Token(type, currentToken);

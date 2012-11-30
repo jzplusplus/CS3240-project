@@ -67,9 +67,9 @@ public class RegexParser {
 				regex.length());
 		ParseTree root = new ParseTree(NonterminalSymbol.REGEX);
 		rexp(root, reader, definedClasses);
-		if (peekAndConsumeWhitespace(reader) != null) {
-			throw new ParseException("Lingering characters found! This is not a valid regex!");
-		}
+//		if (peekAndConsumeWhitespace(reader) != null || peekAndConsumeWhitespace(reader)) {
+//			throw new ParseException("Lingering characters found! This is not a valid regex!");
+//		}
 		return root;
 	}
 

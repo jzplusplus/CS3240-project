@@ -27,8 +27,13 @@ public class DFA {
 	 * character.
 	 */
 	public State doTransition(final Character input) {
-		this.currentState = this.transitionTable.get(this.currentState).get(input);
-		return this.currentState; 
+		if (transitionTable.containsKey(currentState)) {
+			this.currentState = this.transitionTable.get(this.currentState).get(input);
+			return this.currentState; 
+		} else {
+			this.currentState = null;
+			return null;
+		}
 	}
 
 	public void reset() {

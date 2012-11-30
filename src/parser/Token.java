@@ -1,16 +1,16 @@
 package parser;
 
 public class Token {
-	  private Object type;
-	  private Object value;
+	  private String type;
+	  private String value;
 
-	  public Token(Object type, Object value) {
+	  public Token(String type, String value) {
 	    this.type  = type;
 	    this.value = value;
 	  }
 
-	  public Object getValue() { return value; }
+	  public String getValue() { return value; }
 
-	  public Object getType()  { return type;  }
+	  public String getType()  { return type;  }
 
 }
