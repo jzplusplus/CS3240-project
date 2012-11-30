@@ -42,7 +42,6 @@ public class RegexParser {
         	if (verbose) {
         		System.out.println("Looking at " + tokens[0] + " -->" + tokens[1]);
         	}
-//        	try {
     		ParseTree tree = RegexParser.parse(tokens[1], definedClasses);
     		if (currentlyParsingDefinedClasses) {
     			definedClasses.put(tokens[0], tree);
@@ -52,10 +51,6 @@ public class RegexParser {
     		if (verbose) {
     			tree.print();
     		}
-//        	} catch (ParseException e) {
-//        		System.out.println("Caught exception while parsing " + tokens[0]);
-//        		System.out.println(e.getMessage());
-//        	}
         }		
 	}
 	
@@ -72,6 +67,9 @@ public class RegexParser {
 				regex.length());
 		ParseTree root = new ParseTree(NonterminalSymbol.REGEX);
 		rexp(root, reader, definedClasses);
+		if (peekAndConsumeWhitespace(reader) != null) {
+			throw new ParseException("Lingering characters found! This is not a valid regex!");
+		}
 		return root;
 	}
 
@@ -408,7 +406,7 @@ public class RegexParser {
 			Map<String, ParseTree> definedClasses) throws IOException,
 			ParseException {
 		// find longest match of class name in reader, then just plop the whole class name in there and deal with
-		// it later. ALSO, defined classes need spaces after them
+		// it later. ALSO, defined classes need spaces after them, probably!
 		int input;
 		StringBuilder nameBuilder = new StringBuilder();
 		Stack<Character> leftovers = new Stack<Character>();
