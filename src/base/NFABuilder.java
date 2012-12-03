@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import parser.ParseTree;
-import parser.Symbol.NonterminalSymbol;
+import parser.Symbol.NonterminalRegexSymbol;
 import util.NFA;
 import util.State;
 
@@ -72,7 +72,7 @@ public class NFABuilder {
 		if (tree.getValue().isTerminal()) {
 			throw new RuntimeException("this shouldn't be happening!");
 		}
-		NonterminalSymbol symbol = (NonterminalSymbol) tree.getValue();
+		NonterminalRegexSymbol symbol = (NonterminalRegexSymbol) tree.getValue();
 		switch (symbol) {
 		case CHAR_CLASS:
 			// either a ., the start of a list, or a defined class
@@ -271,7 +271,7 @@ public class NFABuilder {
 	}
 	
 	private Set<Character> getRange(ParseTree tree) {
-		if (tree.getValue() != NonterminalSymbol.CHAR_SET) {
+		if (tree.getValue() != NonterminalRegexSymbol.CHAR_SET) {
 			throw new RuntimeException("Shouldn't be calling getRange unless symbol is charset");
 		}
 		// otherwise, the first child is the start symbol (possibly "escaped")
