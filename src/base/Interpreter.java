@@ -21,7 +21,7 @@ public class Interpreter {
 	// the "memory" we'll be using to store our variables:
 	// maps from an identifier to a value.
 	// DON'T access these directly: instead, use assignStringList / assignInteger, etc.
-	private Map<String, List<String>> stringListVars;
+	private Map<String, List<StringMatch>> stringListVars;
 	private Map<String, Integer> intVars;
 	
 	public Interpreter(File scriptHandle) throws IOException, ParseException {
@@ -29,14 +29,14 @@ public class Interpreter {
 	}
 	
 	public Interpreter(String script) throws IOException, ParseException {
-		stringListVars = new HashMap<String, List<String>>();
+		stringListVars = new HashMap<String, List<StringMatch>>();
 		intVars = new HashMap<String, Integer>();
 		
 		scriptRoot = MiniReParser.parse(script);
 		run(scriptRoot);
 	}
 	
-	private void assignStringList(String id, List<String> value) {
+	private void assignStringList(String id, List<StringMatch> value) {
 		// first make sure it's not in the integer table:
 		if (intVars.containsKey(id)) {
 			// remove it
@@ -45,7 +45,7 @@ public class Interpreter {
 		stringListVars.put(id, value);
 	}
 	
-	private List<String> getStringList(String id) { // TODO maybe throw exception on invalid key
+	private List<StringMatch> getStringList(String id) { // TODO maybe throw exception on invalid key
 		return stringListVars.get(id);
 	}
 	
@@ -131,7 +131,7 @@ public class Interpreter {
 		
 	}
 
-	private List<String> evaluateExp(ParseTree expNode) {
+	private List<StringMatch> evaluateExp(ParseTree expNode) {
 		throw new UnsupportedOperationException("TODO: evaluation of exp");
 	}
 	
@@ -225,5 +225,19 @@ public class Interpreter {
 			script += " " + line;
 		}
 		return script;
+	}
+	
+	// a little data wrapper representing a string and its metadata
+	private static class StringMatch {
+		// <file-name, line, start-index, end-index>
+		String value, fileName;
+		Integer line, startIndex, endIndex;
+		public StringMatch(String value	, String fileName, int line, int startIndex, int endIndex) {
+			this.value = value;
+			this.fileName = fileName;
+			this.line = line;
+			this.startIndex = startIndex;
+			this.endIndex = endIndex;
+		}
 	}
 }
