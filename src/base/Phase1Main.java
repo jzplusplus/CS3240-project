@@ -15,7 +15,7 @@ import exception.BadTokenException;
 import exception.EOFException;
 import exception.ParseException;
 
-public class Main {
+public class Phase1Main {
 
 	
 	public static void main(String[] args) throws IOException{

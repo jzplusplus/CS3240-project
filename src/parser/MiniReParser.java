@@ -405,7 +405,6 @@ public class MiniReParser {
 		}
 		reader.read(); // consume '
 		String regex = "";
-		//regex += (char) reader.read();
 		int next;
 		while ((next = reader.read()) != -1) {
 			if (!ParserUtils.isAsciiPrintable((char) next) || singleQuote.equals((char)next)){
@@ -414,11 +413,7 @@ public class MiniReParser {
 			}
 			regex += (char)	 next;
 		}
-		
-//		// unread all these guys
-//		for (int i = regex.length() - 1; i <= 0; i--) {
-//			reader.unread(regex.charAt(i));
-//		}
+
 		if (!ParserUtils.peekSequence(reader, singleQuote.toString())) {
 			throw new ParseException("Couldn't parse regular expression: not enclosed by single quotes");
 		} else {
@@ -433,15 +428,6 @@ public class MiniReParser {
 			return regex;
 		}
 		
-//		Scanner s = new Scanner(reader);
-//		String regex = s.next(); // TODO make sure this consumes characters
-//		if (regex.startsWith("'")) {
-//			regex = regex.substring(1);
-//		} 
-//		if (regex.endsWith("'")) {
-//			regex = regex.substring(0, regex.length() -1);
-//		}
-//		return regex;
 	}
 	
 	private static String peekAscii(PushbackReader reader) throws IOException {
