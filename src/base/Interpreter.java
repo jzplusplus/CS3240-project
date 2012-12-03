@@ -20,6 +20,7 @@ public class Interpreter {
 	
 	// the "memory" we'll be using to store our variables:
 	// maps from an identifier to a value.
+	// DON'T access these directly: instead, use assignStringList / assignInteger, etc.
 	private Map<String, List<String>> stringListVars;
 	private Map<String, Integer> intVars;
 	
