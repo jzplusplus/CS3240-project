@@ -1,0 +1,19 @@
+%% Tokens
+begin end  ID  =  replace with in ; recursivereplace  >!  print ( )  ,  # find diff   union inters maxfreqstring 
+%% Start
+<MiniRE-program>
+%% Rules
+<MiniRE-program> ::=  begin <statement-list> end
+<statement-list> ::=  <statement><statement-list-tail> 
+<statement-list-tail> ::= <statement><statement-list-tail> | epsilon
+<statement> ::= ID = <exp> ; | ID = # <exp> ; | ID = maxfreqstring (ID); | replace REGEX with ASCII-STR in <file-names> ; | recursivereplace REGEX with ASCII-STR in <file-names> ; | print ( <exp-list> ) ;
+<file-names> ::=  <source-file>  >!  <destination-file>
+<source-file> ::=  ASCII-STR  
+<destination-file> ::= ASCII-STR
+<exp-list> ::= <exp> <exp-list-tail>
+<exp-list-tail> ::= , <exp> <exp-list-tail> | epsilon
+<exp> ::= ID  | ( <exp> ) | <term> <exp-tail>
+<exp-tail> ::=  <bin-op> <term> <exp-tail> | epsilon
+<term> ::= find REGEX in  <file-name>  
+<file-name> ::= ASCII-STR
+<bin-op> ::=  diff | union | inters
