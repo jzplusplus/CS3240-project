@@ -93,13 +93,18 @@ public class Interpreter {
 			if (isStringListAssignment(node)) {
 				// ID = <exp> ;
 				// first, evaluate EXP and then call assignStringList(id, expReturnValue);
-				throw new UnsupportedOperationException("TODO: string assignment");
+				String id = node.getChild(0).getValue().getValue();
+				List<StringMatch> exp = evaluateExp(node.getChild(2));
+				assignStringList(id, exp);
 
 			} else if (isIntegerAssignment(node)) {
 				// integer assignment
 				// ID = # <exp> ;
 				// first, evaluate EXP, then call assignInteger(id, expReturnValue.size())
-				throw new UnsupportedOperationException("TODO: integer assignment");
+				String id = node.getChild(0).getValue().getValue();
+				List<StringMatch> exp = evaluateExp(node.getChild(3));
+				Integer size = exp.size();
+				assignInteger(id, size);
 				
 			} else if (isMaxFreqAssignment(node)) {
 				// maxfreqstring assignment
@@ -132,11 +137,97 @@ public class Interpreter {
 	}
 
 	private List<StringMatch> evaluateExp(ParseTree expNode) {
-		throw new UnsupportedOperationException("TODO: evaluation of exp");
+		if (expNode.getValue() != NonterminalMiniReSymbol.EXP) {
+			throw new RuntimeException("Tried to call evaluateExp on a non-EXP node");
+		}
+		// possible production rules:
+		// <exp> -> ID
+		// <exp> -> ( <exp> )
+		// <exp> -> <term> <exp-tail>
+		
+		if (expNode.getChildren().size() == 1 && expNode.getChild(0).getValue().isTerminal()) {
+			// must be <exp> -> ID. get the id, look it up, then return its value.
+			String id = expNode.getChild(0).getValue().getValue();
+			return getStringList(id);
+		} else if (expNode.getChildren().size() == 3) {
+			// must be <exp> -> ( <exp> ). recurse on the middle child, which is another <exp>
+			return evaluateExp(expNode.getChild(1));
+		} else if (expNode.getChild(0).getValue() == NonterminalMiniReSymbol.TERM) {
+			// must be <exp> -> <term> <exp-tail>.
+			List<StringMatch> toReturn = evaluateTerm(expNode.getChild(0));
+			// <exp-tail> might be null, in which case we don't need to worry about binary operators.
+			if (expNode.getChildren().size() == 1) {
+				// there's no exp-tail node, so we can just return this
+				return toReturn;
+			}
+			// otherwise, we need to traverse all the way down until exp-tail is null!
+			// remember, binary ops are left-associative.
+			ParseTree expTailNode = expNode.getChild(1);
+			while (true) {
+				// <exp-tail> -> <bin-op> <term> <exp-tail>
+				// first, let's get the second argument to the binary operator.
+				List<StringMatch> term = evaluateTerm(expTailNode.getChild(1));
+				// then, let's figure out which operator we're using and call it.
+				ParseTree binaryOperatorNode = expTailNode.getChild(0);
+				ReservedWord binaryOperator = (ReservedWord) binaryOperatorNode.getChild(0).getValue();
+				switch (binaryOperator) {
+				case DIFF:
+					toReturn = diff(toReturn, term);
+					break;
+				case UNION:
+					toReturn = union(toReturn, term);
+					break;
+				case INTERS:
+					toReturn = inters(toReturn, term);
+					break;
+				default:
+					throw new RuntimeException("Found invalid binary operator: " + binaryOperator.getValue());
+				}
+				// now, update expTailNode, or break if we're at the bottom of the tree.
+				if (expTailNode.getChildren().size() == 3) {
+					expTailNode = expTailNode.getChild(2);
+				} else {
+					break;
+				}
+			}
+			return toReturn;
+		} else {
+			throw new RuntimeException("Couldn't evaluate exp");
+		}
+	}
+	
+	private List<StringMatch> evaluateTerm(ParseTree termNode) {
+		// find REGEX in <file-name>
+		
+		// first, make sure it's a TERM node.
+		// then, get a DFA for the regular expression by using project 1 code:
+		// 		regexparser, parse tree -> nfa, nfa -> dfa.
+		// then, scan the filename for strings that match the regex.
+		// store them all in a list of stringmatch objects, then return that list.
+		
+		throw new UnsupportedOperationException("TODO: find");
+
+		
+	}
+	
+	private List<StringMatch> diff(List<StringMatch> strings1, List<StringMatch> strings2) {
+		// TODO
+		throw new UnsupportedOperationException("TODO: diff");
+	}
+	private List<StringMatch> union(List<StringMatch> strings1, List<StringMatch> strings2) {
+		// TODO
+		throw new UnsupportedOperationException("TODO: union");
+	}
+	private List<StringMatch> inters(List<StringMatch> strings1, List<StringMatch> strings2) {
+		// TODO
+		throw new UnsupportedOperationException("TODO: inters");
 	}
 	
 	private void printExpList(ParseTree expListNode) {
 		throw new UnsupportedOperationException("TODO: print exp list");
+		
+		// watch out: variables will be either stringmatch lists or integers!
+		// handle accordingly!
 
 	}
 
