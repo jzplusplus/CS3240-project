@@ -6,42 +6,52 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Stack;
 
 import exception.IncorrectRuleFormatException;
 import exception.MultipleStartSymbolException;
 import exception.UndefinedNonterminalException;
 
-public class MiniREParser {
+import parser.ll1.ds.LL1ParsingTable;
+import parser.ll1.ds.Nonterminal;
 
-	private static String start = "<MiniRE-program>"; 
+public class LL1Parser4MiniRE {
 
-	private Stack inputStack;
-	private LL1ParsingTable pt;
-	private ArrayList<Terminal> terminals;
+	private static String MINI_RE_SPEC = "MiniRE_Grammar3.txt";
+	private static String EPSILON = "epsilon";
+	private static String ASCII_STR = "ASCII-STR";
+
+
+	private Nonterminal start;
 	private ArrayList<Nonterminal> nonterminals;
-	private ArrayList<String> nonterminalsInStr;
-	private ArrayList<String> terminalsInStr;
+	private ArrayList<String> tokens;	
+	private HashMap<Nonterminal,ArrayList<String[]>> ruleMap;
+	private HashMap<String,Nonterminal> nonterminalMap;
+	private LL1ParsingTable table;
 	private ArrayList<String> program;
+	private Stack<String> inputStack;
+	private Stack<String> parsingStack;
 
-	public MiniREParser(String miniRESpec) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
-		LL1ParserGenerator ll1 = new LL1ParserGenerator(miniRESpec);
-		pt = ll1.getParsingTable();
-		terminals = ll1.getTerminals();
-		terminalsInStr = ll1.getTerminalsInString();
-		nonterminals = ll1.getNonterminals();
-		nonterminalsInStr = ll1.getNonterminalsInString();
-		inputStack = new Stack();
+	public LL1Parser4MiniRE(String script) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
+		SimpleParserGenerator miniRE = new SimpleParserGenerator(MINI_RE_SPEC);
+		table = miniRE.getParsingTable();
+		nonterminals = miniRE.getNonterminals();
+		start = miniRE.getStart();
+		tokens = miniRE.getTokens();
+		ruleMap = miniRE.getRuleMap();
+		nonterminalMap = miniRE.getNonterminalMap();
+		parse(script);
+		run(program);
+
 	}
 
-	public void parse(String inputProgram) throws IOException {
+	private void parse(String inputProgram) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(new File(inputProgram)));
 		String curr;
 		String pStr = "";
 		// program = new ArrayList<String>();
-		while( (curr=br.readLine()) != null ) { 
-			pStr += curr + " ";
-		}
+		while( (curr=br.readLine()) != null ) pStr += curr + " ";
 
 		pStr = pStr.trim();
 
@@ -55,28 +65,99 @@ public class MiniREParser {
 
 		program = split(pStr); 
 
+	}
+
+	private void run(ArrayList<String> program) {
+		inputStack = new Stack<String>();
+		parsingStack = new Stack<String>();
+
+		for (int i=program.size()-1; i>=0; i--) inputStack.push(program.get(i));
+		
+		Nonterminal currNT = start;
+		String curr = inputStack.peek();
+		String[] rule = table.getRule(curr, currNT);
+		while (!inputStack.isEmpty()) {
+
+			if (rule==null) {
+				// error
+			}
+			pushRule(rule);
+			
+			while (!parsingStack.isEmpty()) {
+				String top = parsingStack.peek();
+				
+				if (top.equals("ep")) {
+					
+				} else if (nonterminalMap.containsKey(top)) { // nonterminal
+					
+				} else if (tokens.contains(top)) { // token
+					
+				} else {
+					
+				}
+				// token
+				// nonterminal
+				// REGEX
+				// epsilon
+				// ASCII-STR
+				// ID
+			}
+			
+			if (isToken(curr)) {
+				
+				
+
+				if (curr.equals(parsingStack.peek())) {
+					inputStack.pop();
+					parsingStack.pop();
+					curr = inputStack.peek();
+					if (isToken(curr)) continue;
+				} else if (nonterminalMap.containsKey(parsingStack.peek())) {
+					currNT = nonterminalMap.get(parsingStack.peek());
+					rule = table.getRule(curr, currNT);
+					parsingStack.pop();
+					pushRule(rule);
+				} else {
+					// error
+				}
+
+			} else if (isRegEx(program.indexOf(curr))) {
+
+			} else if (isASCII(program.indexOf(curr))) {
+
+			} else if (isID(program.indexOf(curr))) {
+
+			} else {
+				// error
+			}
+
+
+		}
+
 		for (int i=0; i<program.size(); i++) {
 			if (i==0) {
-				if (isTerminal(program.get(i))) {
-					String[] rule = pt.getRule(findCorrespondingTerminal(program.get(i)), findCorrespondingNonterminal(start));
+				if (isToken(program.get(i))) {
+					rule = table.getRule(program.get(i), start);
 					if (rule==null) {
 						// error
 					}
+
+
 				}
 			} else if (i==program.size()-1) {
 				if (program.get(i).equals("end")) {
 					// terminate
 				}
 			} else {
-				if (isTerminal(program.get(i))) {
+				if (isToken(program.get(i))) {
 
 				} else {
 					if (isID(i)) {
-						
+
 					} else if (isRegEx(i)) {
-						
+
 					} else if (isASCII(i)) {
-						
+
 					} else {
 						// error
 					}
@@ -84,22 +165,18 @@ public class MiniREParser {
 				}
 			}
 		}
-
+	}
+	
+	private void pushRule(String[] rule) {
+		for (int i=rule.length-1; i>=0; i--) parsingStack.push(rule[i]);
 	}
 
-	private boolean isTerminal(String symbol) {
-		for (Terminal t : terminals) {
-			if (t.getValue().equals(symbol)) return true;
+	private boolean isToken(String symbol) {
+		for (String t : tokens) {
+			if (t.equals(symbol)) return true;
 		}
 		return false;
 	}
-
-	private Terminal findCorrespondingTerminal(String tStr) {
-		for (Terminal t : terminals) {
-			if (t.getValue().equals(tStr)) return t;
-		}
-		return null;
-	} 
 
 	private Nonterminal findCorrespondingNonterminal(String ntStr) {
 		for (Nonterminal nt : nonterminals) {
@@ -197,7 +274,7 @@ public class MiniREParser {
 	}
 
 	private boolean isID(int i) {
-		return terminalsInStr.contains(program.get(i)) && !isRegEx(i) && !isASCII(i);
+		return tokens.contains(program.get(i)) && !isRegEx(i) && !isASCII(i);
 	}
 
 	private boolean isRegEx(int i) {
@@ -210,8 +287,8 @@ public class MiniREParser {
 	}
 
 	public static void main(String[] args) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
-		MiniREParser miniRE = new MiniREParser("MiniRE_Grammar2.txt");
-		miniRE.parse("minire_test_script.txt");
+		LL1Parser4MiniRE miniRE = new LL1Parser4MiniRE("minire_test_script.txt");
+		// miniRE.parse("minire_test_script.txt");
 	}
 
 }

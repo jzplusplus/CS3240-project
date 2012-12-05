@@ -4,9 +4,10 @@ begin end  ID  =  replace with in ; recursivereplace  >!  print ( )  ,  # find d
 <MiniRE-program>
 %% Rules
 <MiniRE-program> ::=  begin <statement-list> end
-<statement-list> ::=  <statement><statement-list-tail> 
-<statement-list-tail> ::= <statement><statement-list-tail> | epsilon
-<statement> ::= ID = <exp> ; | ID = # <exp> ; | ID = maxfreqstring ( ID ); | replace REGEX with ASCII-STR in <file-names> ; | recursivereplace REGEX with ASCII-STR in <file-names> ; | print ( <exp-list> ) ;
+<statement-list> ::=  <statement> <statement-list-tail> 
+<statement-list-tail> ::= <statement> <statement-list-tail> | epsilon
+<statement> ::= ID = <statement-tail> | replace REGEX with ASCII-STR in <file-names> ; | recursivereplace REGEX with ASCII-STR in <file-names> ; | print ( <exp-list> ) ;
+<statement-tail> ::= <exp> ; | # <exp> ; | maxfreqstring ( ID ) ;
 <file-names> ::=  <source-file>  >!  <destination-file>
 <source-file> ::=  ASCII-STR  
 <destination-file> ::= ASCII-STR

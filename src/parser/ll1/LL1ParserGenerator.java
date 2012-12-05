@@ -1,9 +1,6 @@
 package parser.ll1;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,10 +27,7 @@ public class LL1ParserGenerator {
 	private static final Rule ASCII_STR = new Rule("ASCII-STR");
 	private static final Rule REGEX = new Rule("REGEX");
 
-	private GrammarScanner grammar;
 	private LL1ParsingTable parsingTable;
-
-	// private ArrayList<String> rules;
 
 	private HashMap<Nonterminal,Rule[]> ruleMap;
 	private ArrayList<String> tokens;
@@ -41,13 +35,7 @@ public class LL1ParserGenerator {
 	private ArrayList<Nonterminal> nonterminals;
 	private ArrayList<Terminal> terminals;
 
-	// private HashMap<Pair,ArrayList<Rule>> parsingTable;
-
-	// strings in ""
-	// regex in ''
-
 	public LL1ParserGenerator(GrammarScanner grammar) {
-		this.grammar = grammar;
 		ruleMap = grammar.getRuleMap();
 		tokens = grammar.getTokens();
 		start = grammar.getStartSymbol();
@@ -61,6 +49,25 @@ public class LL1ParserGenerator {
 		this(new GrammarScanner(grammarSpec));
 	}
 	
+	
+	public LL1ParsingTable getParsingTable() { return parsingTable; }
+	
+	public ArrayList<Nonterminal> getNonterminals() { return nonterminals; }
+
+	public ArrayList<Terminal> getTerminals() { return terminals; }
+	
+	public ArrayList<String> getNonterminalsInString() { 
+		ArrayList<String> ntStrAL = new ArrayList<String>();
+		for (Nonterminal nt : nonterminals) ntStrAL.add(nt.getValue());
+		return ntStrAL; 
+	}
+
+	public ArrayList<String> getTerminalsInString() {
+		ArrayList<String> tStrAL = new ArrayList<String>();
+		for (Terminal t : terminals) tStrAL.add(t.getValue());
+		return tStrAL; 
+	}
+	
 	private void generateTerminals() {
 		terminals.add(new Terminal("ID"));
 		terminals.add(new Terminal("ASCII-STR"));
@@ -70,24 +77,12 @@ public class LL1ParserGenerator {
 		}
 	}
 
-	/**
-	 * 
-	 * 
-	 * 
-	 * 
-	 * @param spec
-	 */
 	private void generateParser() {
+		// leftFactor();
 		generateFirst();
 		generateFollow();
 		generateParsingTable();
 		System.out.println(parsingTable.toString());
-		/*
-		for (Nonterminal nt : nonterminals) {
-			// removeImmediateLeftRecursion(nt,ruleMap.get(nt));
-
-		}
-		*/
 	}
 
 	private void generateFirst() {
@@ -282,8 +277,60 @@ public class LL1ParserGenerator {
 	// private Nonterminal getFirstNonterminal(Rule rule) {}
 
 
-	public void leftFactor() {
-
+	/**
+	 * Removes common prefix if exists
+	 */
+	private void leftFactor() {
+		for (Nonterminal nt : nonterminals) {
+			ArrayList<String> firstSymbols = new ArrayList<String>();
+			for (Rule r : nt.getRules()) {
+				firstSymbols.add(r.getParsedValues()[0]);
+			}
+			String factor = null;
+			int commonFactorCount = 0;
+			int jCount = 0;
+			for (int i = 0; i<firstSymbols.size() ; i++) {
+				for (int j=(i+1)%firstSymbols.size(); jCount<firstSymbols.size() ; j = j%firstSymbols.size()) {
+					jCount++;
+					if (i!=j) {
+						if (firstSymbols.get(i).equals(firstSymbols.get(j))) {
+							factor = firstSymbols.get(i);
+							commonFactorCount++;
+						}
+					}
+				}
+			}
+			if (factor!=null) {
+				String commonFactor = factor + "-factor";
+				String[] factoredRuleStr = new String[2];
+				factoredRuleStr[0] = factor;
+				factoredRuleStr[1] = commonFactor;
+				Rule[] unfactoredRules = nt.getRules();
+				ArrayList<Rule> newRules = new ArrayList<Rule>();
+				for (int i=0; i<unfactoredRules.length; i++) {
+					if (!unfactoredRules[i].getParsedValues()[0].equals(factor)) newRules.add(unfactoredRules[i]);
+					else {
+						Rule commonFactorRemoved = removeCommonFactor(unfactoredRules[i],factor);
+						newRules.add(commonFactorRemoved);
+					}
+				}
+				nt.setRules(newRules.toArray(new Rule[newRules.size()]));				
+			}
+		}
+	}
+	
+	private Rule removeCommonFactor(Rule rule, String commonFactor) {
+		String[] parsedRule = rule.getParsedValues();
+		Rule commonFactorRemoved = null;
+		if (parsedRule.length==1) {
+			if (parsedRule[0].equals(commonFactor)) commonFactorRemoved = new Rule("epsilon");
+		} else {
+			String[] newParsedRule = new String[parsedRule.length-1];
+			for (int i=1; i<parsedRule.length; i++) {
+				newParsedRule[i-1] = parsedRule[i];
+			}
+		}
+		return commonFactorRemoved;
 	}
 
 
@@ -308,7 +355,8 @@ public class LL1ParserGenerator {
 	private Nonterminal createRest(Nonterminal nt) { return new Nonterminal(nt.getValue().substring(0, nt.getValue().length()-1) + rest); }
 
 	public static void main(String[] arg) throws IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
-		String filename = "MiniRE_Grammar2.txt";
+		// String filename = "MiniRE_Grammar2.txt";
+		String filename = "test_grammar.txt";
 
 		LL1ParserGenerator ll1 = new LL1ParserGenerator(new GrammarScanner(filename));
 		System.out.println(ll1.printFirst());
