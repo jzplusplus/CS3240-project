@@ -39,6 +39,10 @@ public class DFA {
 	public void reset() {
 		this.currentState = this.startState;
 	}
+	
+	public boolean isInAcceptState() {
+		return this.currentState != null && this.currentState.isAccepting();
+	}
 
 	public boolean canAccept(String inputString) {
 		this.reset();

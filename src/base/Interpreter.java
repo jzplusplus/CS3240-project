@@ -1,18 +1,30 @@
 package base;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.PushbackReader;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import parser.MiniReParser;
 import parser.ParseTree;
+import parser.RegexParser;
 import parser.Symbol.NonterminalMiniReSymbol;
 import parser.Symbol.ReservedWord;
+import util.DFA;
+import util.NFA;
 import exception.ParseException;
 
 public class Interpreter {
@@ -63,7 +75,7 @@ public class Interpreter {
 		return intVars.get(id);
 	}
 	
-	private void run(ParseTree node) {
+	private void run(ParseTree node) throws IOException {
 		if (node.getValue().isTerminal()) {
 			throw new RuntimeException("Interpreter: should be handling terminal nodes elsewhere!");
 		}
@@ -114,16 +126,24 @@ public class Interpreter {
 				throw new UnsupportedOperationException("TODO: max freq string assignment");
 
 				
-			} else if (isReplace(node)) {
-				// replace
+			} else if (isReplace(node) || isRecursiveReplace(node)) {
 				// replace REGEX with ASCII-STR in <file-names> ;
-				throw new UnsupportedOperationException("TODO: replace statement");
-				
-			} else if (isRecursiveReplace(node)) {
-				// recursivereplace
 				// recursivereplace REGEX with ASCII-STR in <file-names> ;
-				throw new UnsupportedOperationException("TODO: recursive replace statement");
-			
+				
+				String regex = node.getChild(1).getValue().getValue();
+				String substitution = node.getChild(3).getValue().getValue();
+				// <filenames> -> <source-file> >! <destination-file>
+				// <source-file> -> ASCII-STR
+				ParseTree filenamesNode = node.getChild(5);
+				String sourceFile = filenamesNode.getChild(0).getChild(0).getValue().getValue();
+				String destFile = filenamesNode.getChild(2).getChild(0).getValue().getValue();
+				
+				if (isReplace(node)) {
+					replace(regex, substitution, sourceFile, destFile);
+				} else {
+					recursiveReplace(regex, substitution, sourceFile, destFile);
+				}
+				
 			} else if (isPrint(node)) {
 				// print
 				// print ( <exp-list> ) ;
@@ -137,7 +157,120 @@ public class Interpreter {
 		
 	}
 
-	private List<StringMatch> evaluateExp(ParseTree expNode) {
+	private void recursiveReplace(String regex, String substitution,
+			String sourceFile, String destFile) throws IOException {
+		// Additionally a parser error should occur if REGEX and STR are the same.
+		if (substitution.equals('"' + regex + '"')) {
+			// TODO have the parser check for this...?
+			throw new RuntimeException("recursiveReplace: regex cannot equal substitution string");
+		}
+		boolean stringsReplaced = replace(regex, substitution, sourceFile, destFile);
+		if (!stringsReplaced) { // we're done! let's exit!
+			return;
+		}
+		// otherwise, we need to keep trying to replace things.
+		
+		// Since sourceFile and destFile must be different, we need a temporary dest file:
+		File temp = File.createTempFile("temp-1-" + System.currentTimeMillis(), ".txt");
+		while (stringsReplaced) {
+			// as long as we're still changing the file, keep trying to replace things
+			copy(new File(destFile), temp.getPath());
+			stringsReplaced = replace(regex, substitution, temp.getPath(), destFile);
+			
+		}
+		// finally, copy the temporary results into the ultimate destination.
+		//copy(temp, destFile);
+		temp.deleteOnExit();
+	}
+	
+	private void copy(File source, String destName) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(source));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(destName));
+		String line = reader.readLine();
+		writer.write(line);
+		while ((line = reader.readLine()) != null) {
+			writer.newLine();
+			writer.write(line);
+		}
+		reader.close();
+		writer.close();
+	}
+
+	/**
+	 * Replace all strings in sourceFile that match regex with substitution.
+	 * Write the output to destFile.
+	 * @param regex
+	 * @param substitution
+	 * @param sourceFile
+	 * @param destFile
+	 * @return true if any strings were replaced
+	 * @throws IOException 
+	 */
+	private boolean replace(String regex, String substitution, String sourceFile,
+			String destFile) throws IOException {
+		/*
+		 * A parser error occurs if filename1 = filename2. 
+		 * A runtime error occurs if filename1 doesn’t exist or filename2 can’t be written to.
+		 */
+		if (sourceFile.equals(destFile)) { // TODO make parser catch this?
+			throw new RuntimeException("replace: Source file may not equal destination file");
+		}
+		List<StringMatch> matches = find(makeDfa(regex), sourceFile);
+		if (matches.isEmpty()) {
+			copy(new File(sourceFile), destFile);
+			return false;
+		}
+
+		LineNumberReader reader = new LineNumberReader(new FileReader(sourceFile));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(destFile));
+		String line;
+		while ((line = reader.readLine()) != null) {
+			List<StringMatch> matchesToReplace = getMatchesForLine(reader.getLineNumber(), matches);
+			String replacedLine = "";
+			int i = 0;
+			while (i < line.length()) {
+				List<StringMatch> indexMatches = getMatchesForStartIndex(i, matchesToReplace);
+				if (indexMatches.isEmpty()) {
+					replacedLine += line.charAt(i);
+					i++;
+				} else {
+					// there's probably only one match per start index, right?
+					// regardless, let's loop over them, I guess
+					for (StringMatch toReplace : indexMatches) {
+						replacedLine += substitution;
+						i = toReplace.endIndex - 1;
+					}
+				}
+			}
+			writer.write(replacedLine);
+			writer.newLine(); // TODO don't write final newline
+		}
+		reader.close();
+		writer.close();
+		return true;
+	}
+	
+	private List<StringMatch> getMatchesForLine(int lineNumber, List<StringMatch> matches) {
+		List<StringMatch> lineMatches = new ArrayList<StringMatch>();
+		for (StringMatch m : matches) {
+			if (m.line.equals(lineNumber)) {
+				lineMatches.add(m);
+			}
+		}
+		return lineMatches;
+	}
+	
+	private List<StringMatch> getMatchesForStartIndex(int startIndex, List<StringMatch> matches) {
+		List<StringMatch> indexMatches = new ArrayList<StringMatch>();
+		for (StringMatch m : matches) {
+			if (m.startIndex.equals(startIndex)) {
+				indexMatches.add(m);
+			}
+		}
+		return indexMatches;
+	}
+
+	private List<StringMatch> evaluateExp(ParseTree expNode) throws FileNotFoundException {
 		if (expNode.getValue() != NonterminalMiniReSymbol.EXP) {
 			throw new RuntimeException("Tried to call evaluateExp on a non-EXP node");
 		}
@@ -197,18 +330,102 @@ public class Interpreter {
 		}
 	}
 	
-	private List<StringMatch> evaluateTerm(ParseTree termNode) {
+	private List<StringMatch> evaluateTerm(ParseTree termNode) throws FileNotFoundException {
 		// find REGEX in <file-name>
-		
 		// first, make sure it's a TERM node.
+		if (termNode.getValue() != NonterminalMiniReSymbol.TERM) {
+			throw new RuntimeException("Called evaluateTerm on a " + termNode.getValue().getValue() + " node");
+		}
+		
 		// then, get a DFA for the regular expression by using project 1 code:
 		// 		regexparser, parse tree -> nfa, nfa -> dfa.
+		String regex = termNode.getChild(1).getValue().getValue();
+		DFA regexDfa = makeDfa(regex);
+		
 		// then, scan the filename for strings that match the regex.
-		// store them all in a list of stringmatch objects, then return that list.
 		
-		throw new UnsupportedOperationException("TODO: find");
+		// <file-name> -> "foo.txt"
+		String fileName = termNode.getChild(3).getChild(0).getValue().getValue();
 
+		return find(regexDfa, fileName);
 		
+	}
+	
+	private DFA makeDfa(String regex) {
+		ParseTree regexTree;
+		try {
+			regexTree = RegexParser.parse(regex, new HashMap<String, ParseTree>());
+		} catch (ParseException e) {
+			throw new RuntimeException("Invalid regular expression: " + regex);
+		} catch (IOException e) {
+			throw new RuntimeException("Got IO error parsing the regular expression: " + regex);
+		}
+		NFA regexNfa = new NFABuilder(new HashMap<String, ParseTree>()).build(regexTree);
+		DFA regexDfa = new DFA(regexNfa, regexNfa.getStartState());
+		return regexDfa;
+	}
+	
+	private List<StringMatch> find(DFA regex, String filename) {
+		try {
+
+			LineNumberReader fileReader = new LineNumberReader(new FileReader(filename));
+			List<StringMatch> matches = new ArrayList<StringMatch>();
+			String line;
+			while ((line = fileReader.readLine()) != null) {
+				// time to get a new token: let's reset all our bookkeeping objects
+				// make a pushback reader for this line, so we can unread leftover characters
+				PushbackReader lineReader = new PushbackReader(new StringReader(line), line.length());
+				Stack<Character> leftovers = new Stack<Character>();
+				int startIndex = 0;
+				int endIndex = 0;
+				while (true) {
+					StringMatch match = null;
+					StringBuilder matchingString = new StringBuilder();
+					regex.reset();
+					int nextInt;
+					endIndex = startIndex;
+					
+					while ((nextInt = lineReader.read()) != -1) {
+						// iterate over all the characters left in this line, so we get the longest match possible
+						Character next = (char) nextInt;
+						leftovers.push(next);
+						matchingString.append(next);
+						endIndex++;
+						// advance the DFA
+						regex.doTransition(next);
+						if (regex.isInAcceptState()) {
+							match = new StringMatch(matchingString.toString(), 
+													filename, 
+													fileReader.getLineNumber(), 
+													startIndex, 
+													endIndex + 1);
+							leftovers.clear();
+						}
+					}
+					if (!leftovers.isEmpty()) {
+						// push the leftovers back into the line reader, so we can search through them again
+						while (!leftovers.isEmpty()) {
+							lineReader.unread(leftovers.pop());
+							endIndex--;
+						}
+					} else {
+						break; // no more characters to read: get out of the while(true)
+					}
+					if (match == null) {
+						// we didn't find a match on this sequence.
+						// so, let's skip the next character, so we don't just scan the same sequence again!
+						lineReader.read();
+						startIndex = endIndex + 1;
+					} else {
+						matches.add(match);
+						startIndex = endIndex;
+					}
+				}
+			}
+			return matches;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
 	private List<StringMatch> diff(List<StringMatch> strings1, List<StringMatch> strings2) {
@@ -329,7 +546,7 @@ public class Interpreter {
 	}
 	
 	// a little data wrapper representing a string and its metadata
-	private static class StringMatch {
+	private static class StringMatch implements Comparable<StringMatch> {
 		// <file-name, line, start-index, end-index>
 		String value, fileName;
 		Integer line, startIndex, endIndex;
@@ -341,8 +558,29 @@ public class Interpreter {
 			this.endIndex = endIndex;
 		}
 		
-		public boolean equals(Object compare){
+		public boolean equals(Object compare){ // this is... not correct. make another method that just compares values, if that's what you care about.
 			return value.equals(((StringMatch)compare).value);
+		}
+
+		@Override
+		public int compareTo(StringMatch o) {
+			// order by:
+			// filename, line, start index, then value.
+			if (!this.fileName.equals(o.fileName)) {
+				return this.fileName.compareTo(o.fileName);
+			}
+			if (!this.line.equals(o.line)) {
+				return this.line.compareTo(o.line);
+			}
+			if (!this.startIndex.equals(o.startIndex)) {
+				return this.startIndex.compareTo(o.startIndex);
+			}
+			return this.value.compareTo(o.value);
+		}
+		
+		@Override
+		public String toString() {
+			return '"' + value + "\" <" + fileName + ", " + line + ", " + startIndex + ", " + endIndex + ">";
 		}
 	}
 }

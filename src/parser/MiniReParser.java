@@ -127,7 +127,7 @@ public class MiniReParser {
 			if (ascii == null) {
 				throw new ParseException("Statement (replace): found invalid ascii string");
 			}
-			ParserUtils.consumeSequence(reader, ascii);
+			ParserUtils.consumeSequence(reader, '"' + ascii + '"');
 			statement.addChild(new ParseTree(new TerminalSymbol(ascii)));
 			
 			// in
@@ -160,7 +160,7 @@ public class MiniReParser {
 			if (ascii == null) {
 				throw new ParseException("Statement (recursivereplace): found invalid ascii string");
 			}
-			ParserUtils.consumeSequence(reader, ascii);
+			ParserUtils.consumeSequence(reader, '"' + ascii + '"');
 			statement.addChild(new ParseTree(new TerminalSymbol(ascii)));
 			
 			// in
@@ -220,7 +220,7 @@ public class MiniReParser {
 			throw new ParseException("Source-file: Couldn't find valid filename");
 		}
 		ParseTree sourceFile = new ParseTree(NonterminalMiniReSymbol.SOURCE_FILE);
-		ParserUtils.consumeSequence(reader, filename);
+		ParserUtils.consumeSequence(reader, '"' + filename + '"' );
 		sourceFile.addChild(new ParseTree(new TerminalSymbol(filename)));
 		root.addChild(sourceFile);
 	}
@@ -231,7 +231,7 @@ public class MiniReParser {
 		if (filename == null) {
 			throw new ParseException("Destination-file: Couldn't find valid filename");
 		}
-		ParserUtils.consumeSequence(reader, filename);
+		ParserUtils.consumeSequence(reader, '"' + filename + '"');
 		ParseTree sourceFile = new ParseTree(NonterminalMiniReSymbol.DESTINATION_FILE);
 		sourceFile.addChild(new ParseTree(new TerminalSymbol(filename)));
 		root.addChild(sourceFile);
@@ -333,7 +333,7 @@ public class MiniReParser {
 		if (ascii == null) {
 			throw new ParseException("file-name: Couldn't find valid filename");
 		}
-		ParserUtils.consumeSequence(reader, ascii);
+		ParserUtils.consumeSequence(reader, '"' + ascii + '"');
 		fileName.addChild(new ParseTree(new TerminalSymbol(ascii)));
 		root.addChild(fileName);
 	}
@@ -455,8 +455,8 @@ public class MiniReParser {
 		if (!ParserUtils.peekSequence(reader, doubleQuote.toString())) {
 			return null;
 		} else {
-			ascii += doubleQuote;
-			return ascii;
+			//ascii += doubleQuote;
+			return ascii.substring(1);
 		}
 	}
 	
