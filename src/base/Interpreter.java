@@ -37,8 +37,11 @@ public class Interpreter {
 	private Map<String, List<StringMatch>> stringListVars;
 	private Map<String, Integer> intVars;
 	
+	private String g_src_filename = null; // added for printExpList
+	
 	public Interpreter(File scriptHandle) throws IOException, ParseException {
 		this(readFile(scriptHandle));
+		g_src_filename = scriptHandle.getName(); 
 	}
 	
 	public Interpreter(String script) throws IOException, ParseException {
@@ -210,7 +213,7 @@ public class Interpreter {
 			String destFile) throws IOException {
 		/*
 		 * A parser error occurs if filename1 = filename2. 
-		 * A runtime error occurs if filename1 doesn’t exist or filename2 can’t be written to.
+		 * A runtime error occurs if filename1 does not exist or filename2 can be written to.
 		 */
 		if (sourceFile.equals(destFile)) { // TODO make parser catch this?
 			throw new RuntimeException("replace: Source file may not equal destination file");
@@ -451,13 +454,31 @@ public class Interpreter {
 	}
 	
 	private void printExpList(ParseTree expListNode) {
-		throw new UnsupportedOperationException("TODO: print exp list");
-		
+		//throw new UnsupportedOperationException("TODO: print exp list");		
 		// watch out: variables will be either stringmatch lists or integers!
 		// handle accordingly!
-
+		
+		if(expListNode != null) {							
+			if(isIntegerAssignment(expListNode)) {
+				System.out.println("ID: " + expListNode.getValue() + " // Integer Value: " + getInteger(expListNode.getValue().toString()));
+				
+			}else if(isStringListAssignment(expListNode)) {
+				List<StringMatch> strMList = getStringList(expListNode.getValue().toString());
+					
+				for(int i=0; i<strMList.size(); i++) {
+					System.out.println("ID: " + expListNode.getValue() + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
+				}					
+				
+			}else {
+				System.out.println("Error: It was neither StringMatch nor Integer.");
+			}				
+		}
+			
+		if(expListNode.getChildren() != null) { /* If it does not have children, getChildren returns null or an empty list? */
+			for(ParseTree node: expListNode.getChildren())
+				printExpList(node);
+		}	
 	}
-
 	
 	private static boolean isStringListAssignment(ParseTree statementNode) {
 		if (statementNode.getValue() != NonterminalMiniReSymbol.STATEMENT) {
