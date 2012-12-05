@@ -100,10 +100,10 @@ public class RegexParser {
 	private static void rexpPrime(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
+		//Character next = ParserUtils.peekAndConsumeWhitespace(reader);
 		
-		if (new Character('|').equals(next)) {
-			reader.read(); // consume the character
+		if (ParserUtils.peekSequence(reader, "|")) {
+			ParserUtils.consumeSequence(reader, "|");
 			ParseTree rexpPrimeNode = new ParseTree(
 					NonterminalRegexSymbol.REXP_PRIME);
 			rexpPrimeNode.addChild(new ParseTree(new TerminalSymbol("|")));
@@ -122,14 +122,12 @@ public class RegexParser {
 	private static void rexp1Prime(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
 
-		if (next == null) {
-			return;
-		}
-
-		if (next.equals('(') || peekReChar(reader) != null || next.equals('.')
-				|| next.equals('[') || next.equals('$')) {
+		if (ParserUtils.peekSequence(reader,"(") 
+				|| peekReChar(reader) != null 
+				|| ParserUtils.peekSequence(reader,".)")
+				|| ParserUtils.peekSequence(reader,"[") 
+				|| ParserUtils.peekSequence(reader, "$")) {
 			ParseTree rexp1PrimeNode = new ParseTree(
 					NonterminalRegexSymbol.REXP1_PRIME);
 			rexp2(rexp1PrimeNode, reader, definedClasses);
@@ -146,25 +144,21 @@ public class RegexParser {
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
 		// Token ahead = te.peekNextToken();
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
+		//Character next = ParserUtils.peekAndConsumeWhitespace(reader);
 		ParseTree rexp2Node = new ParseTree(NonterminalRegexSymbol.REXP2);
-		if (Character.valueOf('(').equals(next)) {
-			reader.read(); // consume char
+		if (ParserUtils.peekSequence(reader, "(")) {
+			ParserUtils.consumeSequence(reader, "(");
 			rexp2Node.addChild(new ParseTree(new TerminalSymbol("(")));
 			rexp(rexp2Node, reader, definedClasses);
-			if (!Character.valueOf(')').equals(ParserUtils.peekAndConsumeWhitespace(reader))) {
-				throw new ParseException("Rexp2: Expected ), got "
-						+ ParserUtils.peek(reader));
-			} // otherwise
-			// consume )
-			reader.read();
+			ParserUtils.consumeSequence(reader, ")");
 			rexp2Node.addChild(new ParseTree(new TerminalSymbol(")")));
 			rexp2_tail(rexp2Node, reader, definedClasses);
 		} else if (peekReChar(reader) != null) {
 			String reChar = peekReChar(reader);
-			for (int i = 0; i < reChar.length(); i++) {
-				reader.read(); // consume it
-			}
+			ParserUtils.consumeSequence(reader, reChar);
+//			for (int i = 0; i < reChar.length(); i++) {
+//				reader.read(); // consume it
+//			}
 			rexp2Node.addChild(new ParseTree(new TerminalSymbol(reChar)));
 			rexp2_tail(rexp2Node, reader, definedClasses);
 		} else {
@@ -179,9 +173,10 @@ public class RegexParser {
 	private static void rexp2_tail(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
-		if (next != null && (next.equals('*') || next.equals('+'))) {
-			reader.read(); // consume char
+		if (ParserUtils.peekSequence(reader, "+")
+				|| ParserUtils.peekSequence(reader,"*")) {
+			Character next = ParserUtils.peekAndConsumeWhitespace(reader);
+			ParserUtils.consumeSequence(reader, next.toString());
 			ParseTree rexp2TailNode = new ParseTree(
 					NonterminalRegexSymbol.REXP2_TAIL);
 			rexp2TailNode.addChild(new ParseTree(new TerminalSymbol(next
@@ -196,9 +191,10 @@ public class RegexParser {
 	private static void rexp3(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
-		if (next != null
-				&& (next.equals('.') || next.equals('[') || next.equals('$'))) {
+//		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
+		if (ParserUtils.peekSequence(reader, ".")
+				|| ParserUtils.peekSequence(reader, "[")
+				|| ParserUtils.peekSequence(reader, "$")) {
 			ParseTree rexp3Node = new ParseTree(NonterminalRegexSymbol.REXP3);
 			char_class(rexp3Node, reader, definedClasses);
 			root.addChild(rexp3Node);
@@ -211,13 +207,13 @@ public class RegexParser {
 	private static void char_class(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
+		//Character next = ParserUtils.peekAndConsumeWhitespace(reader);
 		ParseTree charClassNode = new ParseTree(NonterminalRegexSymbol.CHAR_CLASS);
-		if (Character.valueOf('.').equals(next)) {
-			reader.read(); // consume char
+		if (ParserUtils.peekSequence(reader, ".")) {
+			ParserUtils.consumeSequence(reader, ".");
 			charClassNode.addChild(new ParseTree(new TerminalSymbol(".")));
-		} else if (Character.valueOf('[').equals(next)) {
-			reader.read(); // consume char
+		} else if (ParserUtils.peekSequence(reader, "[")) {
+			ParserUtils.consumeSequence(reader, "[");
 			charClassNode.addChild(new ParseTree(new TerminalSymbol("[")));
 			char_class1(charClassNode, reader, definedClasses);
 		} else {
@@ -252,17 +248,21 @@ public class RegexParser {
 		if (peekClsChar(reader) != null) {
 			char_set(charSetListNode, reader, definedClasses);
 			char_set_list(charSetListNode, reader, definedClasses);
-		} else if (Character.valueOf(']').equals(ParserUtils.peekAndConsumeWhitespace(reader))) {
-			System.out.println(ParserUtils.peek(reader));
-			reader.read(); // consume it
-			System.out.println(ParserUtils.peek(reader));
-			System.out.println("YEEHAW");
-			charSetListNode.addChild(new ParseTree(new TerminalSymbol("]")));
 		} else {
-			throw new ParseException(
-					"Char-set-list: Expected cls char or ], got "
-							+ ParserUtils.peek(reader));
+			ParserUtils.consumeSequence(reader, "]");
+			charSetListNode.addChild(new ParseTree(new TerminalSymbol("]")));
 		}
+//		} else if (Character.valueOf(']').equals(ParserUtils.peekAndConsumeWhitespace(reader))) {
+//			System.out.println(ParserUtils.peek(reader));
+//			reader.read(); // consume it
+//			System.out.println(ParserUtils.peek(reader));
+//			System.out.println("YEEHAW");
+//			charSetListNode.addChild(new ParseTree(new TerminalSymbol("]")));
+//		} else {
+//			throw new ParseException(
+//					"Char-set-list: Expected cls char or ], got "
+//							+ ParserUtils.peek(reader));
+//		}
 		root.addChild(charSetListNode);
 
 	}
@@ -278,9 +278,10 @@ public class RegexParser {
 		}
 		ParseTree charSetNode = new ParseTree(NonterminalRegexSymbol.CHAR_SET);
 		charSetNode.addChild(new ParseTree(new TerminalSymbol(clsChar)));
-		for (int i = 0; i < clsChar.length(); i++) {
-			reader.read(); // consume the characters
-		}
+//		for (int i = 0; i < clsChar.length(); i++) {
+//			reader.read(); // consume the characters
+//		}
+		ParserUtils.consumeSequence(reader, clsChar);
 		char_set_tail(charSetNode, reader, definedClasses);
 		root.addChild(charSetNode);
 	}
@@ -290,10 +291,11 @@ public class RegexParser {
 			Map<String, ParseTree> definedClasses) throws IOException,
 			ParseException {
 		Character next = ParserUtils.peek(reader);
-		if (!Character.valueOf('-').equals(next)) {
+		if (!ParserUtils.peekSequence(reader, "-")) {
 			return;
 		}
-		reader.read(); // consume
+		//reader.read(); // consume
+		ParserUtils.consumeSequence(reader, "-");
 		ParseTree charSetTailNode = new ParseTree(
 				NonterminalRegexSymbol.CHAR_SET_TAIL);
 		charSetTailNode.addChild(new ParseTree(new TerminalSymbol("-")));
@@ -303,9 +305,10 @@ public class RegexParser {
 					+ ParserUtils.peek(reader));
 		}
 		charSetTailNode.addChild(new ParseTree(new TerminalSymbol(clsChar)));
-		for (int i = 0; i < clsChar.length(); i++) {
-			reader.read(); // consume clsChar
-		}
+//		for (int i = 0; i < clsChar.length(); i++) {
+//			reader.read(); // consume clsChar
+//		}
+		ParserUtils.consumeSequence(reader, clsChar);
 		root.addChild(charSetTailNode);
 
 	}
@@ -314,14 +317,15 @@ public class RegexParser {
 	private static void exclude_set(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
-		if (!Character.valueOf('^').equals(next)) {
-			throw new ParseException("Exclude-set: Expected ^, got " + next);
-		}
+//		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
+//		if (!Character.valueOf('^').equals(next)) {
+//			throw new ParseException("Exclude-set: Expected ^, got " + next);
+//		}
 		ParseTree excludeSetNode = new ParseTree(NonterminalRegexSymbol.EXCLUDE_SET);
-		reader.read(); // consume ^
+//		reader.read(); // consume ^
+		ParserUtils.consumeSequence(reader, "^");
 		excludeSetNode.addChild(new ParseTree(new TerminalSymbol("^")));
-		next = ParserUtils.peekAndConsumeWhitespace(reader);
+//		next = ParserUtils.peekAndConsumeWhitespace(reader);
 //		if (Character.valueOf(' ').equals(next)) { // spaces are optional here,
 //													// but let's not make a node
 //													// for them
@@ -329,23 +333,26 @@ public class RegexParser {
 //		}
 		char_set(excludeSetNode, reader, definedClasses);
 		// let's check if the next 4 chars are "] IN " :
-
-		next = ParserUtils.peekAndConsumeWhitespace(reader);
-		if (!Character.valueOf(']').equals(next)) {
-			throw new ParseException("Exclude-set: expected ], got " + next);
-		}
-		reader.read(); // eat the ]
+		
+//		next = ParserUtils.peekAndConsumeWhitespace(reader);
+//		if (!Character.valueOf(']').equals(next)) {
+//			throw new ParseException("Exclude-set: expected ], got " + next);
+//		}
+//		reader.read(); // eat the ]
+		ParserUtils.consumeSequence(reader, "]");
 		excludeSetNode.addChild(new ParseTree(new TerminalSymbol("]")));
-		next = ParserUtils.peekAndConsumeWhitespace(reader);
-		if (!Character.valueOf('I').equals(next)) {
-			throw new ParseException("Exclude-set: expected IN, got " + next);
-		}
-		reader.read(); // eat the I
-		next = ParserUtils.peek(reader);
-		if (!Character.valueOf('N').equals(next)) {
-			throw new ParseException("Exclude-set: expected IN, got " + next);
-		}
-		reader.read(); // eat the N
+//		next = ParserUtils.peekAndConsumeWhitespace(reader);
+//		if (!Character.valueOf('I').equals(next)) {
+//			throw new ParseException("Exclude-set: expected IN, got " + next);
+//		}
+//		reader.read(); // eat the I
+//		next = ParserUtils.peek(reader);
+//		if (!Character.valueOf('N').equals(next)) {
+//			throw new ParseException("Exclude-set: expected IN, got " + next);
+//		}
+//		reader.read(); // eat the N
+		ParserUtils.consumeSequence(reader, "IN");
+
 		excludeSetNode.addChild(new ParseTree(new TerminalSymbol("IN")));
 //		StringBuilder sb = new StringBuilder();
 //		for (int i = 0; i < 5; i++) {
@@ -365,19 +372,20 @@ public class RegexParser {
 	private static void exclude_set_tail(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
-		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
+//		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
 		ParseTree excludeSetTailNode = new ParseTree(
 				NonterminalRegexSymbol.EXCLUDE_SET_TAIL);
-		if (Character.valueOf('[').equals(next)) {
+		if (ParserUtils.peekSequence(reader, "[")) {
 
-			reader.read(); // consume [
+			ParserUtils.consumeSequence(reader, "[");
 			excludeSetTailNode.addChild(new ParseTree(new TerminalSymbol("[")));
 			char_set(excludeSetTailNode, reader, definedClasses);
-			next = (char) reader.read(); // try to consume ]
-			if (!Character.valueOf(']').equals(next)) {
-				throw new ParseException("Exclude-set-tail: Expected ], got "
-						+ next);
-			}
+			ParserUtils.consumeSequence(reader, "]");
+//			next = (char) reader.read(); // try to consume ]
+//			if (!Character.valueOf(']').equals(next)) {
+//				throw new ParseException("Exclude-set-tail: Expected ], got "
+//						+ next);
+//			}
 			// we already consumed ], now add to the tree
 			excludeSetTailNode.addChild(new ParseTree(new TerminalSymbol("]")));
 		} else {
@@ -427,17 +435,17 @@ public class RegexParser {
 	private static String peekClsChar(PushbackReader reader) throws IOException {
 		Character next = ParserUtils.peek(reader);
 		// first check if it's ascii printable (but not \, ^, -, [ and ] )
-		if (next == null) {
+		if (next == null || !ParserUtils.isAsciiPrintable(next)) {
 			return null;
-		} else if (ParserUtils.isAsciiPrintable(next) && !isForbiddenInCls(next)) {
+		} else if (!isForbiddenInCls(next)) {
 			return next.toString();
 		}
 
 		// then check if it's one of the escape sequences:
 		// \\, \^, \-, \[ and \]
-		next = (char) reader.read();
+		reader.read();
 		int oneAfterNextInt = reader.read();
-		Character oneAfterNext = (char) reader.read();
+		Character oneAfterNext = (char) oneAfterNextInt;
 		// we got em, now pop em back on
 		reader.unread(oneAfterNext);
 		reader.unread(next);
