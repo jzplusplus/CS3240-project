@@ -17,7 +17,7 @@ public class InterpreterTest {
 		Interpreter i = new Interpreter(
 				"begin" +
 				"foo = find '(mentor | Mentor)' in \"file1.txt\";" +
-				"bar = find '([a-z])+' in \"file1.txt\";" +
+				"bar = find '[A-Z]([a-z])+' in \"file1.txt\";" +
 				"replace '[aeiou]' with \"oo\" in \"file1.txt\" >! \"foobar.txt\";" +
 				"recursivereplace 'oo' with \"o\" in \"foobar.txt\" >! \"baz.txt\";" + 
 				"end");
