@@ -422,7 +422,7 @@ public class MiniReParser {
 			try {
 				RegexParser.parse(regex, new HashMap<String, ParseTree>());
 			} catch (ParseException e) {
-				throw new ParseException("Couldn't parse regular expression: " + regex);
+				throw new ParseException("Couldn't parse regular expression: " + regex, e);
 			}
 //			System.out.println("Consumed " + regex);
 			return regex;

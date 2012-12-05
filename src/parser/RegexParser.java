@@ -84,10 +84,11 @@ public class RegexParser {
 
 	}
 
-	// <rexp1> -> <rexp2> <rexp1¡¯> | E
+	// <rexp1> -> <rexp2> <rexp1¡¯> 
 	private static void rexp1(ParseTree root, PushbackReader reader,
 			Map<String, ParseTree> definedClasses) throws ParseException,
 			IOException {
+
 		ParseTree rexp1Node = new ParseTree(NonterminalRegexSymbol.REXP1);
 		rexp2(rexp1Node, reader, definedClasses);
 		rexp1Prime(rexp1Node, reader, definedClasses);
@@ -151,7 +152,7 @@ public class RegexParser {
 			reader.read(); // consume char
 			rexp2Node.addChild(new ParseTree(new TerminalSymbol("(")));
 			rexp(rexp2Node, reader, definedClasses);
-			if (!Character.valueOf(')').equals(ParserUtils.peek(reader))) {
+			if (!Character.valueOf(')').equals(ParserUtils.peekAndConsumeWhitespace(reader))) {
 				throw new ParseException("Rexp2: Expected ), got "
 						+ ParserUtils.peek(reader));
 			} // otherwise
@@ -251,8 +252,11 @@ public class RegexParser {
 		if (peekClsChar(reader) != null) {
 			char_set(charSetListNode, reader, definedClasses);
 			char_set_list(charSetListNode, reader, definedClasses);
-		} else if (Character.valueOf(']').equals(ParserUtils.peek(reader))) {
+		} else if (Character.valueOf(']').equals(ParserUtils.peekAndConsumeWhitespace(reader))) {
+			System.out.println(ParserUtils.peek(reader));
 			reader.read(); // consume it
+			System.out.println(ParserUtils.peek(reader));
+			System.out.println("YEEHAW");
 			charSetListNode.addChild(new ParseTree(new TerminalSymbol("]")));
 		} else {
 			throw new ParseException(
@@ -452,7 +456,7 @@ public class RegexParser {
 	}
 
 	private static String peekReChar(PushbackReader reader) throws IOException {
-		Character next = ParserUtils.peek(reader);
+		Character next = ParserUtils.peekAndConsumeWhitespace(reader);
 		// first check if it's ascii printable (but not space, \, *, +, ?, |, [,
 		// ], (, ), ., ' and ")
 		if (next == null) {

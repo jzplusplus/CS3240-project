@@ -47,16 +47,12 @@ public class ParserUtils {
 		boolean allMatch = true;
 		for (Character c : charsToPeek.toCharArray()) {
 			Character nextInReader = peek(reader);
-			if (nextInReader == null) {
+			if (nextInReader == null || !c.equals(nextInReader)) {
 				allMatch = false;
 				break;
 			}
 			charStack.push(nextInReader);
 			reader.read(); // consume that peek
-			if (!c.equals(nextInReader)) {
-				allMatch = false;
-				break;
-			}
 		}
 		while (!charStack.isEmpty()) {
 			reader.unread(charStack.pop());
