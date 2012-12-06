@@ -107,18 +107,20 @@ public class Interpreter {
 			// there are only a few kinds of statements:
 			// string list assignment
 			if (isStringListAssignment(node)) {
-				// ID = <exp> ;
+				// ID = <statement-tail>
+				// <statement-tail> ::= <exp> ;
 				// first, evaluate EXP and then call assignStringList(id, expReturnValue);
 				String id = node.getChild(0).getValue().getValue();
-				List<StringMatch> exp = evaluateExp(node.getChild(2));
+				List<StringMatch> exp = evaluateExp(node.getChild(2).getChild(0));
 				assignStringList(id, exp);
 
 			} else if (isIntegerAssignment(node)) {
 				// integer assignment
-				// ID = # <exp> ;
+				// ID = <statement-tail>
+				// <statement-tail> ::= # <exp> ;
 				// first, evaluate EXP, then call assignInteger(id, expReturnValue.size())
 				String id = node.getChild(0).getValue().getValue();
-				List<StringMatch> exp = evaluateExp(node.getChild(3));
+				List<StringMatch> exp = evaluateExp(node.getChild(2).getChild(1));
 				Integer size = exp.size();
 				assignInteger(id, size);
 				
@@ -286,7 +288,7 @@ public class Interpreter {
 
 	private List<StringMatch> evaluateExp(ParseTree expNode) throws FileNotFoundException {
 		if (expNode.getValue() != NonterminalMiniReSymbol.EXP) {
-			throw new RuntimeException("Tried to call evaluateExp on a non-EXP node");
+			throw new RuntimeException("Tried to call evaluateExp on a non-EXP node" + expNode);
 		}
 		// possible production rules:
 		// <exp> -> ID
@@ -516,6 +518,9 @@ public class Interpreter {
 				for(int i=0; i<strMList.size(); i++) { 
 					System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
 				}					
+				
+			}else {
+				throw new RuntimeException("Error: It was neither StringMatch nor Integer.");
 			}				
 		}
 			
@@ -532,14 +537,15 @@ public class Interpreter {
 			return false;
 		}
 		// string list assignments:
-		// ID = <exp> ;
-		if (statementNode.getChildren().size() != 4) {
+		// ID = <statement-tail>
+		// 				<statement-tail> ::= <exp>;
+		if (statementNode.getChildren().size() != 3 || statementNode.getChild(2).getChildren().size() != 2) {
 			return false;
 		}
 		return (statementNode.getChild(0).getValue().isTerminal() 
 				&& statementNode.getChild(1).getValue() == ReservedWord.ASSIGN
-				&& statementNode.getChild(2).getValue() == NonterminalMiniReSymbol.EXP
-				&& statementNode.getChild(3).getValue() == ReservedWord.SEMICOLON);
+				&& statementNode.getChild(2).getChild(0).getValue() == NonterminalMiniReSymbol.EXP
+				&& statementNode.getChild(2).getChild(1).getValue() == ReservedWord.SEMICOLON);
 	}
 	
 	
@@ -548,15 +554,16 @@ public class Interpreter {
 			return false;
 		}
 		// int assignments:
-		// ID = # <exp> ;
-		if (statementNode.getChildren().size() != 5) {
+		// ID = <statement-tail>
+		// 				<statement-tail> ::= # <exp>;
+		if (statementNode.getChildren().size() != 3	|| statementNode.getChild(2).getChildren().size() != 3) {
 			return false;
 		}
 		return (statementNode.getChild(0).getValue().isTerminal() 
 				&& statementNode.getChild(1).getValue() == ReservedWord.ASSIGN
-				&& statementNode.getChild(1).getValue() == ReservedWord.INT
-				&& statementNode.getChild(3).getValue() == NonterminalMiniReSymbol.EXP
-				&& statementNode.getChild(4).getValue() == ReservedWord.SEMICOLON);
+				&& statementNode.getChild(2).getChild(0).getValue() == ReservedWord.INT
+				&& statementNode.getChild(2).getChild(1).getValue() == NonterminalMiniReSymbol.EXP
+				&& statementNode.getChild(2).getChild(2).getValue() == ReservedWord.SEMICOLON);
 	}
 	
 	private boolean isMaxFreqAssignment(ParseTree statementNode) {
@@ -564,17 +571,18 @@ public class Interpreter {
 			return false;
 		}
 		// maxfreq assignments:
-		// ID = maxfreqstring ( ID ) ;
-		if (statementNode.getChildren().size() != 7) {
+		// ID = <statement-tail>
+		//  <statement-tail>::= maxfreqstring ( ID ) ;
+		if (statementNode.getChildren().size() != 3 || statementNode.getChild(2).getChildren().size() != 5) {
 			return false;
 		}
 		return (statementNode.getChild(0).getValue().isTerminal() 
 				&& statementNode.getChild(1).getValue() == ReservedWord.ASSIGN
-				&& statementNode.getChild(1).getValue() == ReservedWord.MAXFREQSTRING
-				&& statementNode.getChild(3).getValue().getValue().equals("(")
-				&& statementNode.getChild(4).getValue().isTerminal()
-				&& statementNode.getChild(5).getValue().getValue().equals(")")
-				&& statementNode.getChild(6).getValue() == ReservedWord.SEMICOLON);
+				&& statementNode.getChild(2).getChild(0).getValue() == ReservedWord.MAXFREQSTRING
+				&& statementNode.getChild(2).getChild(1).getValue().getValue().equals("(")
+				&& statementNode.getChild(2).getChild(2).getValue().isTerminal()
+				&& statementNode.getChild(2).getChild(3).getValue().getValue().equals(")")
+				&& statementNode.getChild(2).getChild(4).getValue() == ReservedWord.SEMICOLON);
 	}
 	
 

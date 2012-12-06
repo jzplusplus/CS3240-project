@@ -73,6 +73,7 @@ public class MiniReParser {
 		ParseTree statement = new ParseTree(NonterminalMiniReSymbol.STATEMENT);
 		String peekId = peekId(reader);
 		if (peekId != null) {
+			// ID = <statement-tail>
 			statement.addChild(new ParseTree(new TerminalSymbol(peekId)));
 			ParserUtils.consumeSequence(reader, peekId);
 			// then we can have = , = #, or = maxfreq.
@@ -83,30 +84,8 @@ public class MiniReParser {
 			} catch (ParseException e) {
 				throw new ParseException("Statement: Couldn't find =");
 			}
-			// if the next character is in <exp>...
-			if (ParserUtils.peekSequence(reader, "(") || peekId(reader) != null 
-					|| ParserUtils.peekSequence(reader, ReservedWord.FIND.getValue())) {
-				//... then we should recurse into <exp>.
-				exp(statement, reader);
-			} else if (ParserUtils.peekSequence(reader, ReservedWord.INT.getValue())) {
-				// gobble up the #, then recurse into <exp>
-				ParserUtils.consumeSequence(reader, ReservedWord.INT.getValue());
-				statement.addChild(new ParseTree(ReservedWord.INT));
-				exp(statement, reader);
-			} else { // must be maxfreqstring ( id )
-				ParserUtils.consumeSequence(reader, ReservedWord.MAXFREQSTRING.getValue());
-				statement.addChild(new ParseTree(ReservedWord.MAXFREQSTRING));
-				ParserUtils.consumeSequence(reader, "(");
-				statement.addChild(new ParseTree(new TerminalSymbol("(")));
-				String id = peekId(reader);
-				ParserUtils.consumeSequence(reader, id);
-				statement.addChild(new ParseTree(new TerminalSymbol(id)));
-				ParserUtils.consumeSequence(reader, ")");
-				statement.addChild(new ParseTree(new TerminalSymbol(")")));
-			}
-			// regardless, gobble up a semicolon.
-			ParserUtils.consumeSequence(reader, ReservedWord.SEMICOLON.getValue());
-			statement.addChild(new ParseTree(ReservedWord.SEMICOLON));
+			statementTail(statement, reader);
+
 			
 		} else if (ParserUtils.peekSequence(reader, ReservedWord.REPLACE.getValue())) {
 			// replace REGEX with ASCII-STR in <file-names> ;
@@ -200,6 +179,37 @@ public class MiniReParser {
 		}
 		root.addChild(statement);
 		
+	}
+	
+	private static void statementTail(ParseTree root, PushbackReader reader) throws ParseException, IOException {
+		// <exp> ; | # <exp> ; | maxfreqstring ( ID ) 
+		ParseTree statementTail = new ParseTree(NonterminalMiniReSymbol.STATEMENT_TAIL);
+		// if the next character is in <exp>...
+		if (ParserUtils.peekSequence(reader, "(") || peekId(reader) != null 
+				|| ParserUtils.peekSequence(reader, ReservedWord.FIND.getValue())) {
+			//... then we should recurse into <exp>.
+			exp(statementTail, reader);
+		} else if (ParserUtils.peekSequence(reader, ReservedWord.INT.getValue())) {
+			// gobble up the #, then recurse into <exp>
+			ParserUtils.consumeSequence(reader, ReservedWord.INT.getValue());
+			statementTail.addChild(new ParseTree(ReservedWord.INT));
+			exp(statementTail, reader);
+		} else { // must be maxfreqstring ( id )
+			ParserUtils.consumeSequence(reader, ReservedWord.MAXFREQSTRING.getValue());
+			statementTail.addChild(new ParseTree(ReservedWord.MAXFREQSTRING));
+			ParserUtils.consumeSequence(reader, "(");
+			statementTail.addChild(new ParseTree(new TerminalSymbol("(")));
+			String id = peekId(reader);
+			ParserUtils.consumeSequence(reader, id);
+			statementTail.addChild(new ParseTree(new TerminalSymbol(id)));
+			ParserUtils.consumeSequence(reader, ")");
+			statementTail.addChild(new ParseTree(new TerminalSymbol(")")));
+		}
+		// regardless, gobble up a semicolon.
+		ParserUtils.consumeSequence(reader, ReservedWord.SEMICOLON.getValue());
+		statementTail.addChild(new ParseTree(ReservedWord.SEMICOLON));
+		
+		root.addChild(statementTail);
 	}
 
 	
