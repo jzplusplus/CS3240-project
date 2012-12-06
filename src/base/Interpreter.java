@@ -272,6 +272,16 @@ public class Interpreter {
 		}
 		return indexMatches;
 	}
+	
+	private List<StringMatch> getMatchesForValue(String value, List<StringMatch> matches) {
+		List<StringMatch> valueMatches = new ArrayList<StringMatch>();
+		for (StringMatch m : matches) {
+			if (m.value.equals(value)) {
+				valueMatches.add(m);
+			}
+		}
+		return valueMatches;
+	}
 
 	private List<StringMatch> evaluateExp(ParseTree expNode) throws FileNotFoundException {
 		if (expNode.getValue() != NonterminalMiniReSymbol.EXP) {
@@ -432,25 +442,55 @@ public class Interpreter {
 	}
 	
 	private List<StringMatch> diff(List<StringMatch> strings1, List<StringMatch> strings2) {
-		List<StringMatch> differenceList = new LinkedList<StringMatch>();
+		ArrayList<StringMatch> differenceList = new ArrayList<StringMatch>();
 		
-		for(StringMatch string1: strings1)
+		for(StringMatch s1: strings1)
 		{
-			if(!strings2.contains(string1))
+			if(getMatchesForValue(s1.value, strings2).size() == 0)
 			{
-				differenceList.add(string1);
+				differenceList.add(s1);
 			}
 		}
 		return differenceList;
 	}
 	
 	private List<StringMatch> union(List<StringMatch> strings1, List<StringMatch> strings2) {
-		// TODO
-		throw new UnsupportedOperationException("TODO: union");
+		List<StringMatch> unionList = new ArrayList<StringMatch>();
+		
+		for(StringMatch s1: strings1)
+		{
+			unionList.add(s1);
+		}
+		
+		for(StringMatch s2: strings2)
+		{
+			if(!unionList.contains(s2)) unionList.add(s2);
+		}
+		
+		return unionList;
 	}
+	
 	private List<StringMatch> inters(List<StringMatch> strings1, List<StringMatch> strings2) {
-		// TODO
-		throw new UnsupportedOperationException("TODO: inters");
+		List<StringMatch> intersList = new ArrayList<StringMatch>();
+		
+		//only look for matches with a certain value once
+		List<String> valuesInList = new ArrayList<String>();
+		
+		for(StringMatch s1: strings1)
+		{
+			//Already added all of strings1 and strings2 that matches this value
+			if(valuesInList.contains(s1.value)) continue;
+			
+			List<StringMatch> matches2 = getMatchesForValue(s1.value, strings2);
+			if(matches2.size() > 0) //If we find the value in both lists
+			{
+				List<StringMatch> matches1 = getMatchesForValue(s1.value, strings1);
+				
+				intersList.addAll(union(matches1, matches2)); //union all StringMatches for value from strings1 and strings2
+			}
+		}
+		
+		return intersList;
 	}
 	
 	private void printExpList(ParseTree expListNode)  {
@@ -584,8 +624,9 @@ public class Interpreter {
 			this.endIndex = endIndex;
 		}
 		
-		public boolean equals(Object compare){ // this is... not correct. make another method that just compares values, if that's what you care about.
-			return value.equals(((StringMatch)compare).value);
+		public boolean equals(Object o){
+			if(!(o instanceof StringMatch)) return false;
+			return (this.compareTo((StringMatch)o) == 0);
 		}
 
 		@Override
