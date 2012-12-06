@@ -453,28 +453,33 @@ public class Interpreter {
 		throw new UnsupportedOperationException("TODO: inters");
 	}
 	
-	private void printExpList(ParseTree expListNode) {
-		//throw new UnsupportedOperationException("TODO: print exp list");		
-		// watch out: variables will be either stringmatch lists or integers!
-		// handle accordingly!
+	private void printExpList(ParseTree expListNode)  {
+		// assume all nodes are some sorts of <exp>
+		// if <exp> is an integer
+		// prints out the integer value + a new line
+		// else if <exp> is a string-match
+		// prints out the elements in order including the matched string, the filename, and the index
+		// else system-error
+		// if the current node has children
+		// pass each child to the current function recursively
 		
-		if(expListNode != null) {							
+		if(expListNode!=null) {							
 			if(isIntegerAssignment(expListNode)) {
-				System.out.println("ID: " + expListNode.getValue() + " // Integer Value: " + getInteger(expListNode.getValue().toString()));
+				System.out.println("ID: " + expListNode.getValue().getValue() + " // Integer Value: " + getInteger(expListNode.getValue().toString()));
 				
 			}else if(isStringListAssignment(expListNode)) {
 				List<StringMatch> strMList = getStringList(expListNode.getValue().toString());
 					
 				for(int i=0; i<strMList.size(); i++) {
-					System.out.println("ID: " + expListNode.getValue() + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
+					System.out.println("ID: " + expListNode.getValue().getValue() + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
 				}					
 				
 			}else {
-				System.out.println("Error: It was neither StringMatch nor Integer.");
+				System.err.print("Error: It was neither StringMatch nor Integer.");
 			}				
 		}
 			
-		if(expListNode.getChildren() != null) { /* If it does not have children, getChildren returns null or an empty list? */
+		if(expListNode.getChildren()!=null | !(expListNode.getChildren().isEmpty()) ) { /* If it does not have children, getChildren returns null or an empty list? */
 			for(ParseTree node: expListNode.getChildren())
 				printExpList(node);
 		}	
