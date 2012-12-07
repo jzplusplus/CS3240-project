@@ -20,7 +20,8 @@ public class InterpreterTest {
 				"bar = find '[A-Z]([a-z])+' in \"file1.txt\";" +
 				"replace '[aeiou]' with \"oo\" in \"file1.txt\" >! \"foobar.txt\";" +
 				"recursivereplace 'oo' with \"o\" in \"foobar.txt\" >! \"baz.txt\";" + 
-				"end");
+				"end"
+				);
 	} // failed on [A-Z](a-z)+. I think the problem is in DFA
 
 }

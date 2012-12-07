@@ -148,6 +148,7 @@ public class Interpreter {
 				}
 				
 			} else if (isPrint(node)) {
+
 				// print
 				// print ( <exp-list> ) ;
 				//  print each of the <exp>s that make up <exp-list>
@@ -494,34 +495,35 @@ public class Interpreter {
 	}
 	
 	private void printExpList(ParseTree expListNode)  {
-		// assume all nodes are some sorts of <exp>
 		// if <exp> is an integer
-		// prints out the integer value + a new line
+		// 	prints out the integer value + a new line
 		// else if <exp> is a string-match
-		// prints out the elements in order including the matched string, the filename, and the index
-		// else system-error
+		// 	prints out the elements in order including the matched string, the filename, and the index
 		// if the current node has children
-		// pass each child to the current function recursively
+		// 	pass each child to the current function 
 		
-		if(expListNode!=null) {							
-			if(isIntegerAssignment(expListNode)) {
-				System.out.println("ID: " + expListNode.getValue().getValue() + " // Integer Value: " + getInteger(expListNode.getValue().toString()));
+		System.out.println(" ----- Come into printExpList ----- ");
 				
-			}else if(isStringListAssignment(expListNode)) {
-				List<StringMatch> strMList = getStringList(expListNode.getValue().toString());
+		if(expListNode!=null) {				
+			String id = expListNode.getChild(0).getValue().getValue(); // the only case <exp> meets an ID is "<exp> ::= ID  | ( <exp> )" which has an ID as the first child. 			
+			
+			if(intVars.containsKey(id)) { // if the first child was an ID
+				System.out.println("ID: " + id + " // Integer Value: " + getInteger(id));
+				
+			}else if(stringListVars.containsKey(id)) { // if the first child was an ID
+				List<StringMatch> strMList = getStringList(id);
 					
-				for(int i=0; i<strMList.size(); i++) {
-					System.out.println("ID: " + expListNode.getValue().getValue() + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
+				for(int i=0; i<strMList.size(); i++) { 
+					System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
 				}					
-				
-			}else {
-				System.err.print("Error: It was neither StringMatch nor Integer.");
 			}				
 		}
 			
-		if(expListNode.getChildren()!=null | !(expListNode.getChildren().isEmpty()) ) { /* If it does not have children, getChildren returns null or an empty list? */
-			for(ParseTree node: expListNode.getChildren())
-				printExpList(node);
+		if(expListNode.getChildren()!=null || !(expListNode.getChildren().isEmpty()) ) {
+			for(ParseTree node: expListNode.getChildren()) // since we do not exactly know the number of children of the current node (<exp> or <exp-list> or <exp-list-tail>)
+				if(node != null)
+					if(node.getValue() == NonterminalMiniReSymbol.EXP) // only passes <exp> children to save time
+						printExpList(node);
 		}	
 	}
 	
