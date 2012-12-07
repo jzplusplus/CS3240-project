@@ -1,5 +1,5 @@
 %% Tokens
-begin end  ID  =  replace with in ; recursivereplace  >!  print ( )  ,  # find diff   union inters maxfreqstring 
+begin end  ID  =  replace with in ; recursivereplace  >!  print ( )  ,  # find diff   union inters maxfreqstring REGEX ASCII-STR
 %% Start
 <MiniRE-program>
 %% Rules

@@ -1,0 +1,9 @@
+%% Tokens
+other if else 0 1 ( ) number
+%% Start
+<statement>
+%% Rules
+<statement> ::= <if-stmt> | other
+<if-stmt> ::= if ( <exp> ) <statement> <else-part>
+<else-part> ::= else <statement> | epsilon
+<exp> ::= 0 | 1

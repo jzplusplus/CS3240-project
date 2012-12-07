@@ -1,23 +1,21 @@
-package parser.ll1.ds;
+package parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import parser.ll1.ds.Nonterminal;
-
 public class LL1ParsingTable {
 
 	private ArrayList<Pair> pairs; 
-	private HashMap<Nonterminal,HashMap<String,String[]>> parsingTable;
+	private HashMap<Pair,String[]> parsingTable; // Nonterminal terminal
 	private ArrayList<String> terminals;
 	private ArrayList<Nonterminal> nonterminals;
 
 	public LL1ParsingTable(ArrayList<String> terminals, ArrayList<Nonterminal> nonterminals) {
-		parsingTable = new HashMap<Nonterminal,HashMap<String,String[]>>();
+		parsingTable = new HashMap<Pair,String[]>();
 		pairs = new ArrayList<Pair>();
 		this.terminals = terminals;
 		this.nonterminals = nonterminals;
-		// initializeTable();
+		initializeTable();
 	}
 
 	private void initializeTable() {
@@ -29,14 +27,18 @@ public class LL1ParsingTable {
 	}
 
 	public void setRule(String t, Nonterminal nt, String[] rule) {
-		parsingTable.put(nt, new HashMap<String,String[]>());
-		parsingTable.get(nt).put(t, rule);
+		for (Pair pair : pairs) {
+			if (pair.getToken().equals(t) && pair.getNonterminal().equals(nt)) {
+				parsingTable.put(pair, rule);
+				break;
+			}
+		}
 	}
 	
 	public String[] getRule(String t, Nonterminal nt) {
-		if (parsingTable.containsKey(nt)) {
-			if (parsingTable.get(nt).containsKey(t)) {
-				return parsingTable.get(nt).get(t);
+		for (Pair pair : pairs) {
+			if (pair.getToken().equals(t) && pair.getNonterminal().equals(nt)) {
+				return parsingTable.get(pair);
 			}
 		}
 		return null;
@@ -69,5 +71,10 @@ public class LL1ParsingTable {
 		public String getToken() { return t; }
 
 		public Nonterminal getNonterminal() { return nt; }
+		
+		@Override
+		public boolean equals(Object obj) {
+			return nt.equals(((Pair) obj).getNonterminal()) && t.equals(((Pair) obj).getToken());
+		}
 	}	
 }

@@ -1,0 +1,12 @@
+%% Tokens
++ - * ( ) number
+%% Start
+<exp>
+%% Rules
+<exp> ::= <term> <exp'>
+<exp'> ::= <addop> <term> <exp'> | epsilon
+<addop> ::= + | -
+<term> ::= <factor> <term'>
+<term'> ::= <mulop> <factor> <term'> | epsilon
+<mulop> ::= *
+<factor> ::= ( <exp> ) | number

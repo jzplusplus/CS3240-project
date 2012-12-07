@@ -1,4 +1,4 @@
-package parser.ll1.ds;
+package parser;
 
 import java.util.ArrayList;
 
@@ -91,4 +91,12 @@ public class Nonterminal {
 
 	public boolean hasEpsilon() { return first.contains(EPSILON); }
 
+	@Override
+	public boolean equals(Object obj) {
+		if ( !((Nonterminal) obj).getValue().equals(getValue()) ) return false;
+		if ( !((Nonterminal) obj).getFirst().equals(getFirst()) ) return false;
+		if ( !((Nonterminal) obj).getFollow().equals(getFollow()) ) return false;
+		if ( !((Nonterminal) obj).getRules().equals(getRules()) ) return false;
+		return true;
+	}
 }

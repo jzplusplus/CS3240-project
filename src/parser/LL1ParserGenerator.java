@@ -1,4 +1,4 @@
-package parser.ll1;
+package parser;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -9,10 +9,7 @@ import exception.IncorrectRuleFormatException;
 import exception.MultipleStartSymbolException;
 import exception.UndefinedNonterminalException;
 
-import parser.ll1.ds.Nonterminal;
-import parser.ll1.ds.LL1ParsingTable;
-
-public class SimpleParserGenerator {
+public class LL1ParserGenerator {
 
 	private Nonterminal start;
 	private ArrayList<Nonterminal> nonterminals;
@@ -23,8 +20,8 @@ public class SimpleParserGenerator {
 
 	private HashMap<Nonterminal,ArrayList<String>> tempFollowMap;
 
-	public SimpleParserGenerator(String grammarSpec) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
-		SimpleGrammarScanner sgs = new SimpleGrammarScanner(grammarSpec);
+	public LL1ParserGenerator(String grammarSpec) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
+		LL1GrammarScanner sgs = new LL1GrammarScanner(grammarSpec);
 		start = sgs.getStartSymbol();
 		nonterminals = sgs.getNonterminals();
 		tokens = sgs.getTokens();
@@ -47,25 +44,37 @@ public class SimpleParserGenerator {
 		table = new LL1ParsingTable(tokens, nonterminals);
 		for (Nonterminal nt : nonterminals) {
 			for (String tok : nt.getFirst()) {
-				for (String t : tokens) {
-					if (t.equals(tok)) {
-						for (String[] rule : nt.getRules()) {
-							if (isNonterminal(rule[0])) {
-								for (String f : nonterminalMap.get(rule[0]).getFirst()) {
-									if (f.equals(tok)) {
-										table.setRule(t, nt, rule);
-										break;
-									}
+				if (tok.equals("epsilon")) {
+					for (String follow : nt.getFollow()) {
+						if (!follow.equals("$")) {
+							for (String[] rule : nt.getRules()) {
+								if (rule[0].equals("epsilon")) {
+									table.setRule(follow, nt, rule);
 								}
-								break;
-							} else if (rule[0].equals(tok)) {
-								table.setRule(t, nt, rule);
-								break;
 							}
-							
 						}
-						break;
 					}
+				} else {
+					for (String t : tokens) {
+						if (t.equals(tok)) {
+							for (String[] rule : nt.getRules()) {
+								if (isNonterminal(rule[0])) {
+									for (String f : nonterminalMap.get(rule[0]).getFirst()) {
+										if (f.equals(tok)) {
+											table.setRule(t, nt, rule);
+											break;
+										}
+									}
+									// break;
+								} else if (rule[0].equals(tok)) {
+									table.setRule(t, nt, rule);
+									break;
+								}
+
+							}
+							break;
+						}
+					} // end for 
 				}
 			}
 		}
@@ -161,8 +170,23 @@ public class SimpleParserGenerator {
 					for (int i=0; i<rule.length; i++) {
 						if (isNonterminal(rule[i])) {
 							if ((i+1)<rule.length) {
-								if (isNonterminal(rule[i+1])) nonterminalMap.get(rule[i]).addFollows(nonterminalMap.get(rule[i+1]).getFirst());
-								else nonterminalMap.get(rule[i]).addFollow(rule[i+1]);
+								for (int j=i+1; j<rule.length; j++) {
+									if (j == rule.length-1) {
+										if (isNonterminal(rule[j])) {
+											if (isNullable(nonterminalMap.get(rule[j]))) {
+												nonterminalMap.get(rule[i]).addFollows(nt.getFollow());
+											}
+										}
+									} else if (isNonterminal(rule[j])) {
+										if (isNullable(nonterminalMap.get(rule[j]))) {
+											nonterminalMap.get(rule[i]).addFollows(nonterminalMap.get(rule[j]).getFirst());
+										} else {
+											break;
+										}
+									}
+									if (isNonterminal(rule[i+1])) nonterminalMap.get(rule[i]).addFollows(nonterminalMap.get(rule[i+1]).getFirst());
+									else nonterminalMap.get(rule[i]).addFollow(rule[i+1]);
+								}
 							} else {
 								if (isNonterminal(rule[i])) {
 									if (nt.getFollow()!=null) {
@@ -215,7 +239,8 @@ public class SimpleParserGenerator {
 	public String toString() { return table.toString(); }
 
 	public static void main(String[] args) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
-		SimpleParserGenerator spg = new SimpleParserGenerator("MiniRE_Grammar3.txt");
+		LL1ParserGenerator spg = new LL1ParserGenerator("MiniRE_Grammar3.txt");
+		// LL1ParserGenerator spg = new LL1ParserGenerator("test_grammar3_ll1.txt");
 		System.out.println(spg.printFirstSets());
 		System.out.println(spg.printFollowSets());
 		System.out.println(spg.toString());

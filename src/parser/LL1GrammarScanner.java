@@ -1,4 +1,4 @@
-package parser.ll1;
+package parser;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,8 +12,6 @@ import exception.IncorrectRuleFormatException;
 import exception.MultipleStartSymbolException;
 import exception.UndefinedNonterminalException;
 
-import parser.ll1.ds.Nonterminal;
-
 /**
  * Scan grammar given in the follow form:
  * %% Tokens
@@ -21,7 +19,7 @@ import parser.ll1.ds.Nonterminal;
  * @author Chris
  *
  */
-public class SimpleGrammarScanner {
+public class LL1GrammarScanner {
 
 	private static final String SPEC_TYPE = "%%";
 	private static final String TOKEN_SPEC = "Tokens";
@@ -39,7 +37,7 @@ public class SimpleGrammarScanner {
 	private HashMap<String,Nonterminal> nonterminalMap;
 	
 	
-	public SimpleGrammarScanner(String GrammarSpec) throws IOException, FileNotFoundException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
+	public LL1GrammarScanner(String GrammarSpec) throws IOException, FileNotFoundException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
 		BufferedReader br = new BufferedReader(new FileReader(new File(GrammarSpec)));
 		scanGrammar(br);
 		constructRuleMap();
@@ -262,7 +260,7 @@ public class SimpleGrammarScanner {
 	public static void main(String[] arg) throws IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
 		String filename = "MiniRE_Grammar3.txt";
 
-		SimpleGrammarScanner scanner = new SimpleGrammarScanner(filename);
+		LL1GrammarScanner scanner = new LL1GrammarScanner(filename);
 		System.out.println(scanner.printTokens());
 		System.out.println(scanner.printNonterminals());
 		System.out.println(scanner.printRuleMap());
