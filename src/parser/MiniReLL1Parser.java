@@ -90,13 +90,20 @@ public class MiniReLL1Parser {
 		if (!isValid(program)) throw new InvalidProgramException();
 		System.out.println(isValid(program));
 		constructAST();
-		// run(program);
-		System.out.println(root.getValue());
-		root.print();
 		
-
 	}
+	
+	
+	
+	public LL1AST getRoot() { return root; }
+	public LL1ParsingTable getParsingTable() { return table; }
+	public ArrayList<Nonterminal> getNonterminals() { return nonterminals; }
+	public HashMap<Nonterminal,ArrayList<String[]>> getRuleMap() { return ruleMap; }
+	public ArrayList<String> getTokens() { return tokens; }
+	public Nonterminal getStart() {return start;}
+	public HashMap<String,Nonterminal> getNonterminalMap() { return nonterminalMap; }
 
+	
 	private void parse(String inputProgram) throws IOException, InvalidProgramException {
 		BufferedReader br = new BufferedReader(new FileReader(new File(inputProgram)));
 		String curr;
@@ -137,35 +144,8 @@ public class MiniReLL1Parser {
 			// top = parsingStack.pop();
 			currNT = nonterminalMap.get(start.getValue());
 			constructAST(currNode);
-			
+			convertASTtoParseTree();
 		}
-
-
-		/*
-		while (!parsingStack.isEmpty() && !inputStack.isEmpty()) {
-			top = parsingStack.pop();
-			children = new ArrayList<LL1AST>();
-			curr = inputStack.pop();
-			currType = determineInputType(curr);
-			rule = table.getRule(curr, currNT);
-			if (rule==null) throw new RuleApplicabilityException();
-			pushRule(rule);
-
-			children = addRuleAsChild(rule);
-			for (LL1AST child : children) {
-				currNode.addChild(child);
-
-				if (tokens.contains(child.getValue())) {
-
-				} else if (nonterminalMap.containsKey(child)) {
-
-				}
-			}
-
-
-		}
-		 */			
-
 	}
 
 	private LL1AST constructAST(LL1AST node) throws RuleApplicabilityException { // assume nonterminal
@@ -291,31 +271,29 @@ public class MiniReLL1Parser {
 		return node;
 	}
 
-	/*
-	private List<ParseTree> addRuleAsChild(String[] rule) {
-		List<ParseTree> children = new ArrayList<ParseTree>();
-		for (int i=0; i<rule.length; i++) {
-			Symbol s;
-			if(nonterminalMap.containsKey(rule[i])) { // if nonterminal
-				s = matchNonterminalSymbol(rule[i]);
-				if (s!=null) children.add(new ParseTree(s));
-			} else if (matchReservedWordSymbol(rule[i])!=null) {
-				s = matchReservedWordSymbol(rule[i]);
-				if (s!=null) children.add(new ParseTree(s));
-			} else if (rule[i].equals(ASCII_STR)) {
-
-			} else if (rule[i].equals(REGEX)) {
-
-			} else if (rule[i].equals(EPSILON)) {
-
-			} else {
-
-			}
-		}
-		return children;
+	private void convertASTtoParseTree() {
+		ParseTree ptRoot = convertASTtoParseTree(root);
 	}
-	 */
-
+	
+	private ParseTree convertASTtoParseTree(LL1AST astNode) {
+		ParseTree ptNode = null;
+		Symbol s;
+		if (nonterminalMap.containsKey(astNode.getValue())) {
+			s = matchNonterminalSymbol(astNode.getValue());
+		} else if (isRegEx(astNode.getValue())) {
+			
+		} else if (isID(astNode.getValue())) {
+			
+		} else if (isASCII(astNode.getValue())) {
+			
+		} else if (tokens.contains(astNode.getValue())) {
+			s = matchReservedWordSymbol(astNode.getValue());
+		}
+		
+		return ptNode;
+		
+	}
+	
 	private List<LL1AST> addRuleAsChild(String[] rule) {
 		List<LL1AST> children = new ArrayList<LL1AST>();
 		for (int i=0; i<rule.length; i++) {
@@ -363,375 +341,6 @@ public class MiniReLL1Parser {
 		if (rw.equals(MAXFREQSTRING)) return Symbol.ReservedWord.MAXFREQSTRING;
 		return null;
 	}
-
-	/*
-	private void run(ArrayList<String> program) throws InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException {
-		inputStack = new Stack<String>();
-		parsingStack = new Stack<String>();
-
-		for (int i=program.size()-1; i>=0; i--) inputStack.push(program.get(i));
-
-		boolean hasBegun = false;
-
-		currNT = start;
-		curr = inputStack.peek();
-		String[] rule = table.getRule(curr, start);
-		while (!inputStack.isEmpty()) {
-
-			if (rule==null) throw new RuleApplicabilityException();
-			pushRule(rule);
-
-			while (!parsingStack.isEmpty()) {
-
-				top = parsingStack.peek();
-
-				if (top.equals(EPSILON)) {
-					parsingStack.pop();
-					top = parsingStack.peek();
-				} else if (top.equals(ASCII_STR)) {
-					if (!isASCII(curr)) throw new InputRuleMismatchException();
-					asciiStrTemp = curr;
-					// create file
-				} else if (top.equals(REGEX)) {
-					if (!isRegEx(curr)) throw new InputRuleMismatchException();
-
-				} else if (top.equals(ID)) {
-					if (!isID(curr)) throw new InputRuleMismatchException();
-
-				} else if (nonterminalMap.containsKey(top)) { // nonterminal
-					currNT = nonterminalMap.get(top);
-					parsingStack.pop();
-					top = parsingStack.peek();
-
-					rule = table.getRule(curr, currNT);
-					if (rule==null) throw new RuleApplicabilityException();
-
-					pushRule(rule);
-				} else if (tokens.contains(top)) { // token
-					if (top.equals(DIFF)) {
-
-					} else if (top.equals(UNION)) {
-
-					} else if (top.equals(INTERS)) {
-
-					} else if (top.equals(PRINT)) {
-						if (!curr.equals(PRINT)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handlePrint();
-					} else if (top.equals(REPLACE)) {
-						if (!curr.equals(REPLACE)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleReplace();
-					} else if (top.equals(RECURSIVEREPLACE)) {
-						if (!curr.equals(RECURSIVEREPLACE)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleRecursivereplace();
-					} else if (top.equals(FIND)) {
-						if (!curr.equals(FIND)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleFind();
-					} else if (top.equals(MAXFREQSTRING)) {
-						if (!curr.equals(MAXFREQSTRING)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleMaxfreqstring();
-					} else if (top.equals(WRITE_TO)) {
-
-					} else if (top.equals(INTEGER_VAR)) {
-
-					} else if (top.equals(OPEN_PAR)) {
-
-					} else if (top.equals(CLOSE_PAR)) {
-
-					} else if (top.equals(COMMA)) {
-
-					} else if (top.equals(BEGIN)) {
-
-					} else if (top.equals(END)) {
-
-					} else if (top.equals(SEMICOLON)) {
-
-					} else if (top.equals(EQUAL)) {
-
-					} else throw new InvalidTokenException();
-				} else {
-					// error
-				}
-				// token
-				// nonterminal
-				// REGEX
-				// epsilon
-				// ASCII-STR
-				// ID
-			}
-
-			if (isToken(curr)) {
-
-
-
-				if (curr.equals(parsingStack.peek())) {
-					inputStack.pop();
-					parsingStack.pop();
-					curr = inputStack.peek();
-					if (isToken(curr)) continue;
-				} else if (nonterminalMap.containsKey(parsingStack.peek())) {
-					currNT = nonterminalMap.get(parsingStack.peek());
-					rule = table.getRule(curr, currNT);
-					parsingStack.pop();
-					pushRule(rule);
-				} else {
-					// error
-				}
-
-			} else if (isRegEx(program.indexOf(curr))) {
-
-			} else if (isASCII(program.indexOf(curr))) {
-
-			} else if (isID(program.indexOf(curr))) {
-
-			} else {
-				// error
-			}
-
-
-		}
-
-		for (int i=0; i<program.size(); i++) {
-			if (i==0) {
-				if (isToken(program.get(i))) {
-					rule = table.getRule(program.get(i), start);
-					if (rule==null) {
-						// error
-					}
-
-
-				}
-			} else if (i==program.size()-1) {
-				if (program.get(i).equals("end")) {
-					// terminate
-				}
-			} else {
-				if (isToken(program.get(i))) {
-
-				} else {
-					if (isID(i)) {
-
-					} else if (isRegEx(i)) {
-
-					} else if (isASCII(i)) {
-
-					} else {
-						// error
-					}
-
-				}
-			}
-		}
-	}
-	 */
-
-	private void run(ArrayList<String> program) throws InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
-		if (!isValid(program)) throw new InvalidProgramException();
-		inputStack = new Stack<String>();
-		parsingStack = new Stack<String>();
-
-		for (int i=program.size()-1; i>=0; i--) inputStack.push(program.get(i));
-
-		String curr = determineInputType(inputStack.pop());
-		parsingStack.push(start.getValue());
-
-		String top;
-		while (!parsingStack.isEmpty()) {
-			top = parsingStack.pop();
-			// if ()
-		}
-
-		boolean hasBegun = false;
-
-		currNT = start;
-		// curr = inputStack.peek();
-		String currType;
-		String[] rule; // = table.getRule(curr, start);
-		while (!inputStack.isEmpty()) {
-
-			curr = inputStack.pop();
-			currType = determineInputType(curr);
-			rule = table.getRule(curr, currNT);
-			if (rule==null) throw new RuleApplicabilityException();
-			pushRule(rule);
-
-			if (curr.equals(BEGIN)) {
-				hasBegun = true;
-				// currNT = start;
-			}
-
-			while (!parsingStack.isEmpty()) {
-
-				top = parsingStack.pop();
-
-				if (isASCII(currType)) {
-
-				} else if (isID(currType)) {
-
-				} else if (isRegEx(currType)) {
-
-				} else if (tokens.contains(currType)) { // not ID
-
-
-				} else throw new RuleApplicabilityException();
-
-				if (curr.equals(END)) {
-					if (hasBegun) {
-						if(inputStack.isEmpty()) {}
-					}
-				}
-
-
-				if (top.equals(EPSILON)) {
-					parsingStack.pop();
-					top = parsingStack.peek();
-				} else if (top.equals(ASCII_STR)) {
-					if (!isASCII(curr)) throw new InputRuleMismatchException();
-					asciiStrTemp = curr;
-					// create file
-				} else if (top.equals(REGEX)) {
-					if (!isRegEx(curr)) throw new InputRuleMismatchException();
-
-				} else if (top.equals(ID)) {
-					if (!isID(curr)) throw new InputRuleMismatchException();
-
-				} else if (nonterminalMap.containsKey(top)) { // nonterminal
-					currNT = nonterminalMap.get(top);
-					parsingStack.pop();
-					top = parsingStack.peek();
-
-					rule = table.getRule(curr, currNT);
-					if (rule==null) throw new RuleApplicabilityException();
-
-					pushRule(rule);
-				} else if (tokens.contains(top)) { // token
-					if (top.equals(DIFF)) {
-
-					} else if (top.equals(UNION)) {
-
-					} else if (top.equals(INTERS)) {
-
-					} else if (top.equals(PRINT)) {
-						if (!curr.equals(PRINT)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handlePrint();
-					} else if (top.equals(REPLACE)) {
-						if (!curr.equals(REPLACE)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleReplace();
-					} else if (top.equals(RECURSIVEREPLACE)) {
-						if (!curr.equals(RECURSIVEREPLACE)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleRecursivereplace();
-					} else if (top.equals(FIND)) {
-						if (!curr.equals(FIND)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleFind();
-					} else if (top.equals(MAXFREQSTRING)) {
-						if (!curr.equals(MAXFREQSTRING)) throw new InputRuleMismatchException();
-						parsingStack.pop();
-						top = parsingStack.peek();
-						inputStack.pop();
-						curr = inputStack.peek();
-						handleMaxfreqstring();
-					} else if (top.equals(WRITE_TO)) {
-
-					} else if (top.equals(INTEGER_VAR)) {
-
-					} else if (top.equals(OPEN_PAR)) {
-
-					} else if (top.equals(CLOSE_PAR)) {
-
-					} else if (top.equals(COMMA)) {
-
-					} else if (top.equals(BEGIN)) {
-
-					} else if (top.equals(END)) {
-
-					} else if (top.equals(SEMICOLON)) {
-
-					} else if (top.equals(EQUAL)) {
-
-					} else throw new InvalidTokenException();
-				} else {
-					// error
-				}
-				// token
-				// nonterminal
-				// REGEX
-				// epsilon
-				// ASCII-STR
-				// ID
-			}
-
-			if (isToken(curr)) {
-
-
-
-				if (curr.equals(parsingStack.peek())) {
-					inputStack.pop();
-					parsingStack.pop();
-					curr = inputStack.peek();
-					if (isToken(curr)) continue;
-				} else if (nonterminalMap.containsKey(parsingStack.peek())) {
-					currNT = nonterminalMap.get(parsingStack.peek());
-					rule = table.getRule(curr, currNT);
-					parsingStack.pop();
-					pushRule(rule);
-				} else {
-					// error
-				}
-
-			} else if (isRegEx(program.indexOf(curr))) {
-
-			} else if (isASCII(program.indexOf(curr))) {
-
-			} else if (isID(program.indexOf(curr))) {
-
-			} else {
-				// error
-			}
-
-
-		}
-
-		if (curr.equals(END)) {
-			if (hasBegun) {}
-		}
-
-	} // end run
-
 
 	public boolean isValid(ArrayList<String> program) throws InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException {
 		inputStack = new Stack<String>();

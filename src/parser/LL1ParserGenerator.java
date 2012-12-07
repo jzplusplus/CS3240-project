@@ -238,13 +238,14 @@ public class LL1ParserGenerator {
 
 	public String toString() { return table.toString(); }
 
+	/*
 	public static void main(String[] args) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
 		LL1ParserGenerator spg = new LL1ParserGenerator("MiniRE_Grammar3.txt");
-		// LL1ParserGenerator spg = new LL1ParserGenerator("test_grammar3_ll1.txt");
 		System.out.println(spg.printFirstSets());
 		System.out.println(spg.printFollowSets());
 		System.out.println(spg.toString());
 
 	}
+	*/
 
 }
