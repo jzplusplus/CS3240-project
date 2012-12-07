@@ -14,14 +14,22 @@ public class InterpreterTest {
 	 */
 	public static void main(String[] args) throws IOException, ParseException {
 		// test file: mentor whoopers filament Mentor argument argumentative tournamnt Tournament games  
-		Interpreter i = new Interpreter(
+		
+		/*Interpreter i = new Interpreter(
 				"begin" +
 				"foo = find '(mentor | Mentor)' in \"file1.txt\";" +
 				"bar = find '[A-Z]([a-z])+' in \"file1.txt\";" +
 				"replace '[aeiou]' with \"oo\" in \"file1.txt\" >! \"foobar.txt\";" +
 				"recursivereplace 'oo' with \"o\" in \"foobar.txt\" >! \"baz.txt\";" + 
-				"end"
-				);
+				"end");*/
+		
+		Interpreter i2 = new Interpreter(
+				"begin" +
+				"foo = find '(mentor | Mentor)' in \"file1.txt\" union find '(filament)' in \"file1.txt\";" +
+				"bar = find '(mentor | Mentor)' in \"file1.txt\" diff find '(Mentor | filament)' in \"file1.txt\";" +
+				"baz = find '(mentor | Mentor)' in \"file1.txt\" inters find '(balloons)' in \"file1.txt\";" +
+				"end");
+		
 	} // failed on [A-Z](a-z)+. I think the problem is in DFA
 
 }
