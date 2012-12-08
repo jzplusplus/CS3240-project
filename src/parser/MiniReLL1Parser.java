@@ -22,9 +22,9 @@ import exception.UndefinedNonterminalException;
 
 public class MiniReLL1Parser {
 
-	private static String MINI_RE_SPEC = "MiniRE_Grammar3.txt";
+	private static String MINI_RE_TOKENS = "token_spec.txt";
 
-	private static String EPSILON = "epsilon";
+	private static String EPSILON = "<epsilon>";
 	private static String ASCII_STR = "ASCII-STR";
 	private static String REGEX = "REGEX";
 	private static String ID = "ID";
@@ -70,12 +70,15 @@ public class MiniReLL1Parser {
 
 	private LL1AST root;
 
-	public MiniReLL1Parser(String script) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
-		LL1ParserGenerator miniRE = new LL1ParserGenerator(MINI_RE_SPEC);
+	public MiniReLL1Parser(String script, String minireGrammar) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
+		// LL1ParserGenerator miniRE = new LL1ParserGenerator(MINI_RE_SPEC);
+		LL1ParserGenerator miniRE = new LL1ParserGenerator(minireGrammar, MINI_RE_TOKENS);
 		table = miniRE.getParsingTable();
 		nonterminals = miniRE.getNonterminals();
 		start = miniRE.getStart();
 		tokens = miniRE.getTokens();
+		// tokens.add("ASCII-STR");
+		// tokens.add("REGEX");
 		ruleMap = miniRE.getRuleMap();
 		nonterminalMap = miniRE.getNonterminalMap();
 		// System.out.println(miniRE.printFirstSets());
@@ -131,7 +134,8 @@ public class MiniReLL1Parser {
 		LL1AST currNode = root;
 
 		while (!parsingStack.isEmpty()) {
-			curr = inputStack.pop();
+			if (!inputStack.isEmpty()) curr = inputStack.pop();
+			if (inputStack.isEmpty()) break;
 			// top = parsingStack.pop();
 			currNT = nonterminalMap.get(currNT.getValue());
 			constructAST(currNode);
@@ -228,6 +232,7 @@ public class MiniReLL1Parser {
 			} else if (currNT.getValue().equals(parsingStack.peek())) { 
 				List<LL1AST> children = new ArrayList<LL1AST>();
 				for (String[] r : currNT.getRules()) {
+										
 					if (r[0].equals(currType)) {
 						parsingStack.pop();
 						pushRule(r);
@@ -244,6 +249,7 @@ public class MiniReLL1Parser {
 						
 						return node;
 					}
+					
 				}
 
 			}
@@ -345,13 +351,6 @@ public class MiniReLL1Parser {
 		for (int i=rule.length-1; i>=0; i--) parsingStack.push(rule[i]);
 	}
 
-	private boolean isToken(String symbol) {
-		for (String t : tokens) {
-			if (t.equals(symbol)) return true;
-		}
-		return false;
-	}
-
 	private ArrayList<String> split(String p) {
 		ArrayList<String> out = new ArrayList<String>();
 		String temp = "";
@@ -443,11 +442,10 @@ public class MiniReLL1Parser {
 		return s.startsWith("\"") && s.endsWith("\"");
 	}
 
-	/*
+	
 	public static void main(String[] args) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
-		MiniReLL1Parser miniRE = new MiniReLL1Parser("minire_test_script.txt");
-		// miniRE.parse("minire_test_script.txt");
-		System.out.println(miniRE.toString());
+		MiniReLL1Parser miniRE = new MiniReLL1Parser("grammar.txt", "minire_test_script.txt");
+
 	}
-	 */
+	
 }

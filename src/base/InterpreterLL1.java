@@ -56,7 +56,7 @@ public class InterpreterLL1 {
 	private static String STATEMENT_LIST = "<statement-list>";
 	private static String STATEMENT_LIST_TAIL = "<statement-list-tail>";
 	private static String STATEMENT = "<statement>";
-	private static String STATEMENT_TAIL = "<statement-tail>";
+	private static String STATEMENT_RIGHTHAND = "<statement-righthand>";
 	private static String FILE_NAMES = "<file-names>";
 	private static String SOURCE_FILE = "<source-file>";
 	private static String DESTINATION_FILE = "<destination-file>";
@@ -67,9 +67,10 @@ public class InterpreterLL1 {
 	private static String TERM = "<term>";
 	private static String FILE_NAME = "<file-name>";
 	private static String BIN_OP = "<bin-op>";
+	private static String EPSILON = "<epsilon>";
 
 	private static String WRITE_TO = ">!";
-	private static String INTEGER_VAR = "#";
+	private static String HASH = "#";
 
 	private static String BEGIN = "begin";
 	private static String END = "end";
@@ -95,21 +96,21 @@ public class InterpreterLL1 {
 	private static String REGEX = "REGEX";
 	private static String ID = "ID";
 
-	public InterpreterLL1(String script) throws IOException, ParseException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
+	public InterpreterLL1(String script, String grammar) throws IOException, ParseException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
 		stringListVars = new HashMap<String, List<StringMatch>>();
 		intVars = new HashMap<String, Integer>();
-		MiniReLL1Parser miniRE = new MiniReLL1Parser(script);
+		MiniReLL1Parser miniRE = new MiniReLL1Parser(script, grammar);
 		scriptRoot = miniRE.getRoot();
 		nonterminalMap = miniRE.getNonterminalMap();
 		run(scriptRoot);
 	}
 
 	private void run(LL1AST node) throws IOException {
-		if (!nonterminalMap.containsKey(node.getValue()) && !node.getValue().equals("epsilon")) { // root is terminal
+		if (!nonterminalMap.containsKey(node.getValue()) && !node.getValue().equals(EPSILON)) { // root is terminal
 			throw new RuntimeException("Interpreter: should be handling terminal nodes elsewhere!");
 		}
 		
-		if (node.getValue().equals("epsilon")) { return; }
+		if (node.getValue().equals(EPSILON)) { return; }
 		
 		// otherwise, assume the value is one of the MiniRE nonterminals.
 
@@ -146,8 +147,8 @@ public class InterpreterLL1 {
 
 			} else if (isIntegerAssignment(node)) {
 				// integer assignment
-				// ID = <statement-tail>
-				// <statement-tail> -> # <exp> ;
+				// ID = <statement-righthand> ;
+				// <statement-righthand> -> # <exp>
 				// first, evaluate EXP, then call assignInteger(id, expReturnValue.size())
 				String id = node.getChild(0).getChild(0).getValue();
 				List<StringMatch> exp = evaluateExp(node.getChild(2).getChild(1));
@@ -379,7 +380,7 @@ public class InterpreterLL1 {
 			LL1AST expTailNode = expNode.getChild(1);
 			while (true) {
 
-				if (expTailNode.getChild(0).getValue().equals("epsilon")) break;
+				if (expTailNode.getChild(0).getValue().equals(EPSILON)) break;
 
 				// <exp-tail> -> <bin-op> <term> <exp-tail>
 				// first, let's get the second argument to the binary operator.
@@ -584,7 +585,7 @@ public class InterpreterLL1 {
 				id = expListNode.getChild(0).getChild(0).getChild(0).getValue();
 			}
 
-			if (id!=null && expListNode.getChild(1).getChild(0).getValue().equals("epsilon")) {
+			if (id!=null && expListNode.getChild(1).getChild(0).getValue().equals(EPSILON)) {
 				if(intVars.containsKey(id)) { // if the first child was an ID
 					System.out.println("ID: " + id + " // Integer Value: " + getInteger(id));
 
@@ -604,7 +605,7 @@ public class InterpreterLL1 {
 		
 		LL1AST expListTailNode = expListNode.getChild(1);
 
-		if( !expListTailNode.getChild(0).getValue().equals("epsilon") ) {
+		if( !expListTailNode.getChild(0).getValue().equals(EPSILON) ) {
 			for(LL1AST node: expListTailNode.getChildren()) // since we do not exactly know the number of children of the current node (<exp> or <exp-list> or <exp-list-tail>)
 				if(node != null)
 					if(node.getValue().equals(EXP)) // only passes <exp> children to save time
@@ -617,15 +618,15 @@ public class InterpreterLL1 {
 
 		// string list assignments:
 		// ID = <exp> ;
-		// <statement> -> ID = <statement-tail>
-		// <statement-tail> -> <exp> ;
-		if (statementNode.getChildren().size() != 3) return false;
-		if (statementNode.getChild(2).getChildren().size() != 2) return false;
+		// <statement> -> ID = <statement-righthand> ;
+		// <statement-righthand> -> <exp>
+		if (statementNode.getChildren().size() != 4) return false;
+		if (statementNode.getChild(2).getChildren().size() != 1) return false;
 
 		return (statementNode.getChild(0).getValue().equals(ID) 
 				&& statementNode.getChild(1).getValue().equals(EQUAL)
 				&& statementNode.getChild(2).getChild(0).getValue().equals(EXP)
-				&& statementNode.getChild(2).getChild(1).getValue().equals(SEMICOLON));
+				&& statementNode.getChild(3).getValue().equals(SEMICOLON));
 	}
 
 
@@ -634,17 +635,17 @@ public class InterpreterLL1 {
 
 		// int assignments:
 		// ID = # <exp> ;
-		// <statement> -> ID = <statement-tail>
-		// <statement-tail> -> # <exp> ;
-		if (statementNode.getChildren().size()!=3) return false;
-		if (!statementNode.getChild(2).getValue().equals(STATEMENT_TAIL)) return false;
-		if (statementNode.getChild(2).getChildren().size()!=3) return false;
+		// <statement> -> ID = <statement-righthand> ;
+		// <statement-righthand> -> # <exp>
+		if (statementNode.getChildren().size() != 4) return false;
+		if (!statementNode.getChild(2).getValue().equals(STATEMENT_RIGHTHAND)) return false;
+		if (statementNode.getChild(2).getChildren().size()!=2) return false;
 
 		return (statementNode.getChild(0).getValue().equals(ID) 
 				&& statementNode.getChild(1).getValue().equals(EQUAL)
-				&& statementNode.getChild(2).getChild(0).getValue().equals(INTEGER_VAR)
+				&& statementNode.getChild(2).getChild(0).getValue().equals(HASH)
 				&& statementNode.getChild(2).getChild(1).getValue().equals(EXP)
-				&& statementNode.getChild(2).getChild(2).getValue().equals(SEMICOLON));
+				&& statementNode.getChild(3).getValue().equals(SEMICOLON));
 	}
 
 	private boolean isMaxFreqAssignment(LL1AST statementNode) {
@@ -652,11 +653,11 @@ public class InterpreterLL1 {
 
 		// maxfreq assignments:
 		// ID = maxfreqstring ( ID ) ;
-		// <statement> -> ID = <statement-tail>
-		// <statement-tail> -> maxfreqstring ( ID ) ;
-		if (statementNode.getChildren().size() != 3) return false;
-		if (!statementNode.getChild(2).getValue().equals(STATEMENT_TAIL)) return false;
-		if (statementNode.getChild(2).getChildren().size()!=5) return false;
+		// <statement> -> ID = <statement-righthand> ;
+		// <statement-righthand> -> maxfreqstring ( ID )
+		if (statementNode.getChildren().size() != 4) return false;
+		if (!statementNode.getChild(2).getValue().equals(STATEMENT_RIGHTHAND)) return false;
+		if (statementNode.getChild(2).getChildren().size()!=4) return false;
 
 
 		return (statementNode.getChild(0).getValue().equals(ID) 
@@ -665,7 +666,7 @@ public class InterpreterLL1 {
 				&& statementNode.getChild(2).getChild(1).getValue().equals("(")
 				&& statementNode.getChild(2).getChild(2).getValue().equals(ID)
 				&& statementNode.getChild(2).getChild(3).getValue().equals(")")
-				&& statementNode.getChild(2).getChild(4).getValue().equals(SEMICOLON));
+				&& statementNode.getChild(3).getValue().equals(SEMICOLON));
 	}
 
 

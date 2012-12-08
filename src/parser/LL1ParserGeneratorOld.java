@@ -9,7 +9,7 @@ import exception.IncorrectRuleFormatException;
 import exception.MultipleStartSymbolException;
 import exception.UndefinedNonterminalException;
 
-public class LL1ParserGenerator {
+public class LL1ParserGeneratorOld {
 
 	private static String EPSILON = "<epsilon>";
 	
@@ -22,7 +22,7 @@ public class LL1ParserGenerator {
 
 	private HashMap<Nonterminal,ArrayList<String>> tempFollowMap;
 
-	public LL1ParserGenerator(String grammarSpec, String tokenSpec) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
+	public LL1ParserGeneratorOld(String grammarSpec, String tokenSpec) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
 		LL1GrammarScanner sgs = new LL1GrammarScanner(grammarSpec, tokenSpec);
 		start = sgs.getStartSymbol();
 		nonterminals = sgs.getNonterminals();
@@ -46,11 +46,11 @@ public class LL1ParserGenerator {
 		table = new LL1ParsingTable(tokens, nonterminals);
 		for (Nonterminal nt : nonterminals) {
 			for (String tok : nt.getFirst()) {
-				if (tok.equals(EPSILON)) {
+				if (tok.equals("epsilon")) {
 					for (String follow : nt.getFollow()) {
 						if (!follow.equals("$")) {
 							for (String[] rule : nt.getRules()) {
-								if (rule[0].equals(EPSILON)) {
+								if (rule[0].equals("epsilon")) {
 									table.setRule(follow, nt, rule);
 								}
 							}
@@ -100,15 +100,31 @@ public class LL1ParserGenerator {
 		while(!isFirstSetComplete()) {
 			ArrayList<String> temp = new ArrayList<String>();
 			for (Nonterminal nt : nonterminals) {
+				// temp = nt.getFirst();
 				for (String f : nt.getFirst()) {
 					if (isNonterminal(f)) {
 						Nonterminal nt2 = nonterminalMap.get(f);
 						temp.addAll(nt2.getFirst());
+						/*
+						for (Nonterminal nt2 : nonterminals) {
+							if (nt2.getValue().equals(f)) {
+								temp.addAll(nt2.getFirst());
+								break;
+							}
+						}
+						 */
 					} else temp.add(f);
 				}
+				/*
+				ArrayList<String[]> rules = ruleMap.get(nt);
+				for (String[] rule : rules) {
+					if (rule.length>0) temp.add(rule[0]);
+				}
+				 */
 				nt.setFirst(temp);
 				temp = new ArrayList<String>();
 			}
+			// constructFirstSetHelper();
 		}
 
 	}
@@ -124,6 +140,7 @@ public class LL1ParserGenerator {
 
 	private void constructFollowSet() {
 		for (Nonterminal nt : nonterminals) {
+			// ArrayList<String> temp = new ArrayList<String>();
 			if (nt.getValue().equals(start.getValue())) nt.addFollow("$");
 			for (String[] rule : nt.getRules()) {
 				for (int i=0; i<rule.length; i++) {
@@ -199,7 +216,7 @@ public class LL1ParserGenerator {
 
 	private String printFollowSet(Nonterminal nt) { return nt.printFollow(); } 
 
-	private boolean isNonterminal(String symbol) { return symbol.startsWith("<") && symbol.endsWith(">") && !symbol.equals(EPSILON); }
+	private boolean isNonterminal(String symbol) { return symbol.startsWith("<") && symbol.endsWith(">"); }
 
 	private boolean isNullable(Nonterminal nt) { return nt.getFirst().contains("epsilon"); }
 
@@ -223,14 +240,14 @@ public class LL1ParserGenerator {
 
 	public String toString() { return table.toString(); }
 
-	
+	/*
 	public static void main(String[] args) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
-		LL1ParserGenerator spg = new LL1ParserGenerator("grammar.txt","token_spec.txt");
+		LL1ParserGenerator spg = new LL1ParserGenerator("MiniRE_Grammar3.txt");
 		System.out.println(spg.printFirstSets());
 		System.out.println(spg.printFollowSets());
 		System.out.println(spg.toString());
 
 	}
-	
+	*/
 
 }
