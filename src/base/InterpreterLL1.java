@@ -24,6 +24,7 @@ import parser.MiniReParser;
 import parser.Nonterminal;
 import parser.ParseTree;
 import parser.RegexParser;
+import parser.Symbol.NonterminalMiniReSymbol;
 import util.DFA;
 import util.NFA;
 import exception.IncorrectRuleFormatException;
@@ -35,23 +36,22 @@ import exception.ParseException;
 import exception.RuleApplicabilityException;
 import exception.UndefinedNonterminalException;
 
-public class Interpreter2 {
+public class InterpreterLL1 {
 
 	private LL1AST scriptRoot;
-	
-	private ArrayList<String> tokens;	
+
 	// private HashMap<Nonterminal,ArrayList<String[]>> ruleMap;
 	private HashMap<String,Nonterminal> nonterminalMap;
-	
+
 	// the "memory" we'll be using to store our variables:
 	// maps from an identifier to a value.
 	// DON'T access these directly: instead, use assignStringList / assignInteger, etc.
 	private Map<String, List<StringMatch>> stringListVars;
 	private Map<String, Integer> intVars;
-	
+
 	private String g_src_filename = null; // added for printExpList
-	
-	
+
+
 	private static String MINI_RE_PROGRAM = "<MiniRE-program>"; 
 	private static String STATEMENT_LIST = "<statement-list>";
 	private static String STATEMENT_LIST_TAIL = "<statement-list-tail>";
@@ -67,7 +67,7 @@ public class Interpreter2 {
 	private static String TERM = "<term>";
 	private static String FILE_NAME = "<file-name>";
 	private static String BIN_OP = "<bin-op>";
-	
+
 	private static String WRITE_TO = ">!";
 	private static String INTEGER_VAR = "#";
 
@@ -90,33 +90,35 @@ public class Interpreter2 {
 	private static String REPLACE = "replace";
 	private static String RECURSIVEREPLACE = "recursivereplace";
 	private static String MAXFREQSTRING = "maxfreqstring";
-	
+
 	private static String ASCII_STR = "ASCII-STR";
 	private static String REGEX = "REGEX";
 	private static String ID = "ID";
-		
-	public Interpreter2(String script) throws IOException, ParseException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
+
+	public InterpreterLL1(String script) throws IOException, ParseException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
 		stringListVars = new HashMap<String, List<StringMatch>>();
 		intVars = new HashMap<String, Integer>();
 		MiniReLL1Parser miniRE = new MiniReLL1Parser(script);
 		scriptRoot = miniRE.getRoot();
-		tokens = miniRE.getTokens();
 		nonterminalMap = miniRE.getNonterminalMap();
 		run(scriptRoot);
 	}
-	
+
 	private void run(LL1AST node) throws IOException {
-		if (!nonterminalMap.containsKey(node.getValue())) { // root is terminal
+		if (!nonterminalMap.containsKey(node.getValue()) && !node.getValue().equals("epsilon")) { // root is terminal
 			throw new RuntimeException("Interpreter: should be handling terminal nodes elsewhere!");
 		}
-		// otherwise, assume the value is one of the MiniRE nonterminals.
-				
-		Nonterminal nt = nonterminalMap.get(node.getValue());
 		
+		if (node.getValue().equals("epsilon")) { return; }
+		
+		// otherwise, assume the value is one of the MiniRE nonterminals.
+
+		Nonterminal nt = nonterminalMap.get(node.getValue());
+
 		switch (nt.getValue()) {
 		// the only thing we'll want to parse and run are STATEMENTs.
 		// for everything else, either recurse or handle as part of STATEMENT.
-	
+
 		case "<MiniRE-program>":
 			// begin <statement-list> end: recurse on children[1]
 			run(node.getChild(1));
@@ -131,7 +133,7 @@ public class Interpreter2 {
 				run(node.getChild(1));
 			}
 			break;
-			
+
 		case "<statement>":
 			// there are only a few kinds of statements:
 			// string list assignment
@@ -139,9 +141,9 @@ public class Interpreter2 {
 				// ID = <exp> ;
 				// first, evaluate EXP and then call assignStringList(id, expReturnValue);
 				String id = node.getChild(0).getChild(0).getValue();
-				List<StringMatch> exp = evaluateExp(node.getChild(2));
+				List<StringMatch> exp = evaluateExp(node.getChild(2).getChild(0));
 				assignStringList(id, exp);
-	
+
 			} else if (isIntegerAssignment(node)) {
 				// integer assignment
 				// ID = <statement-tail>
@@ -151,49 +153,53 @@ public class Interpreter2 {
 				List<StringMatch> exp = evaluateExp(node.getChild(2).getChild(1));
 				Integer size = exp.size();
 				assignInteger(id, size);
-				
+
 			} else if (isMaxFreqAssignment(node)) {
 				// maxfreqstring assignment
 				// ID1 = maxfreqstring ( ID2 ) ;
 				// first, find the maxfreqstring(s) of ID2, then call assignStringList(id1, maxFreqString);
 				throw new UnsupportedOperationException("TODO: max freq string assignment");
-	
-				
+
+
 			} else if (isReplace(node) || isRecursiveReplace(node)) {
 				// replace REGEX with ASCII-STR in <file-names> ;
 				// recursivereplace REGEX with ASCII-STR in <file-names> ;
-				
+
 				String regex = node.getChild(1).getChild(0).getValue();
 				if (regex.startsWith("\'")) regex = regex.substring(1);
 				if (regex.endsWith("\'")) regex = regex.substring(0, regex.length()-1);
-				
+
 				String substitution = node.getChild(3).getChild(0).getValue();
-				if (substitution.startsWith("\'")) substitution = substitution.substring(1);
-				if (substitution.endsWith("\'")) substitution = substitution.substring(0, substitution.length()-1);
-				
+				if (substitution.startsWith("\"")) substitution = substitution.substring(1);
+				if (substitution.endsWith("\"")) substitution = substitution.substring(0, substitution.length()-1);
+
 				// <filenames> -> <source-file> >! <destination-file>
 				// <source-file> -> ASCII-STR
 				LL1AST filenamesNode = node.getChild(5);
 				String sourceFile = filenamesNode.getChild(0).getChild(0).getChild(0).getValue();
+				if (sourceFile.startsWith("\"")) sourceFile = sourceFile.substring(1);
+				if (sourceFile.endsWith("\"")) sourceFile = sourceFile.substring(0, sourceFile.length()-1);
 				String destFile = filenamesNode.getChild(2).getChild(0).getChild(0).getValue();
-				
+				if (destFile.startsWith("\"")) destFile = destFile.substring(1);
+				if (destFile.endsWith("\"")) destFile = destFile.substring(0, destFile.length()-1);
+
 				if (isReplace(node)) {
 					replace(regex, substitution, sourceFile, destFile);
 				} else {
 					recursiveReplace(regex, substitution, sourceFile, destFile);
 				}
-				
+
 			} else if (isPrint(node)) {
 				// print
 				// print ( <exp-list> ) ;
 				//  print each of the <exp>s that make up <exp-list>
 				printExpList(node.getChild(2));
 			}
-			
+
 			break;
-		
+
 		}
-		
+
 	}
 
 	private void assignStringList(String id, List<StringMatch> value) {
@@ -204,11 +210,11 @@ public class Interpreter2 {
 		}
 		stringListVars.put(id, value);
 	}
-	
+
 	private List<StringMatch> getStringList(String id) { // TODO maybe throw exception on invalid key
 		return stringListVars.get(id);
 	}
-	
+
 	private void assignInteger(String id, Integer value) {
 		// first make sure it's not in the string list table:
 		if (stringListVars.containsKey(id)) {
@@ -217,11 +223,11 @@ public class Interpreter2 {
 		}
 		intVars.put(id, value);
 	}
-	
+
 	private Integer getInteger(String id) { // TODO see above
 		return intVars.get(id);
 	}
-	
+
 	private void recursiveReplace(String regex, String substitution,
 			String sourceFile, String destFile) throws IOException {
 		// Additionally a parser error should occur if REGEX and STR are the same.
@@ -234,20 +240,20 @@ public class Interpreter2 {
 			return;
 		}
 		// otherwise, we need to keep trying to replace things.
-		
+
 		// Since sourceFile and destFile must be different, we need a temporary dest file:
 		File temp = File.createTempFile("temp-1-" + System.currentTimeMillis(), ".txt");
 		while (stringsReplaced) {
 			// as long as we're still changing the file, keep trying to replace things
 			copy(new File(destFile), temp.getPath());
 			stringsReplaced = replace(regex, substitution, temp.getPath(), destFile);
-			
+
 		}
 		// finally, copy the temporary results into the ultimate destination.
 		//copy(temp, destFile);
 		temp.deleteOnExit();
 	}
-	
+
 	private void copy(File source, String destName) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(source));
 		BufferedWriter writer = new BufferedWriter(new FileWriter(destName));
@@ -314,7 +320,7 @@ public class Interpreter2 {
 		writer.close();
 		return true;
 	}
-	
+
 	private List<StringMatch> getMatchesForLine(int lineNumber, List<StringMatch> matches) {
 		List<StringMatch> lineMatches = new ArrayList<StringMatch>();
 		for (StringMatch m : matches) {
@@ -324,7 +330,7 @@ public class Interpreter2 {
 		}
 		return lineMatches;
 	}
-	
+
 	private List<StringMatch> getMatchesForStartIndex(int startIndex, List<StringMatch> matches) {
 		List<StringMatch> indexMatches = new ArrayList<StringMatch>();
 		for (StringMatch m : matches) {
@@ -334,7 +340,7 @@ public class Interpreter2 {
 		}
 		return indexMatches;
 	}
-	
+
 	private List<StringMatch> getMatchesForValue(String value, List<StringMatch> matches) {
 		List<StringMatch> valueMatches = new ArrayList<StringMatch>();
 		for (StringMatch m : matches) {
@@ -347,12 +353,12 @@ public class Interpreter2 {
 
 	private List<StringMatch> evaluateExp(LL1AST expNode) throws FileNotFoundException {
 		if (!expNode.getValue().equals(EXP)) throw new RuntimeException("Tried to call evaluateExp on a non-EXP node");
-		
+
 		// possible production rules:
 		// <exp> -> ID
 		// <exp> -> ( <exp> )
 		// <exp> -> <term> <exp-tail>
-		
+
 		if (expNode.getChildren().size() == 1 && expNode.getChild(0).getValue().equals(ID)) {
 			// must be <exp> -> ID. get the id, look it up, then return its value.
 			String id = expNode.getChild(0).getChild(0).getValue();
@@ -372,12 +378,15 @@ public class Interpreter2 {
 			// remember, binary ops are left-associative.
 			LL1AST expTailNode = expNode.getChild(1);
 			while (true) {
+
+				if (expTailNode.getChild(0).getValue().equals("epsilon")) break;
+
 				// <exp-tail> -> <bin-op> <term> <exp-tail>
 				// first, let's get the second argument to the binary operator.
 				List<StringMatch> term = evaluateTerm(expTailNode.getChild(1));
 				// then, let's figure out which operator we're using and call it.
-				LL1AST binaryOperatorNode = expTailNode.getChild(0);
-				
+				LL1AST binaryOperatorNode = expTailNode.getChild(0).getChild(0);
+
 				// ReservedWord binaryOperator = (ReservedWord) binaryOperatorNode.getChild(0).getValue();
 				switch (binaryOperatorNode.getValue()) {
 				case "diff":
@@ -404,31 +413,31 @@ public class Interpreter2 {
 			throw new RuntimeException("Couldn't evaluate exp");
 		}
 	}
-	
+
 	private List<StringMatch> evaluateTerm(LL1AST termNode) throws FileNotFoundException {
 		// find REGEX in <file-name>
 		// first, make sure it's a TERM node.
 		if (!termNode.getValue().equals(TERM)) throw new RuntimeException("Called evaluateTerm on a " + termNode.getValue() + " node");
 
-		
+
 		// then, get a DFA for the regular expression by using project 1 code:
 		// 		regexparser, parse tree -> nfa, nfa -> dfa.
 		String regex = termNode.getChild(1).getChild(0).getValue();
 		if (regex.startsWith("\'")) regex = regex.substring(1);
 		if (regex.endsWith("\'")) regex = regex.substring(0, regex.length()-1);
 		DFA regexDfa = makeDfa(regex);
-		
+
 		// then, scan the filename for strings that match the regex.
-		
+
 		// <file-name> -> "foo.txt"
 		String fileName = termNode.getChild(3).getChild(0).getChild(0).getValue();
 		if (fileName.startsWith("\"")) fileName = fileName.substring(1);
 		if (fileName.endsWith("\"")) fileName = fileName.substring(0, fileName.length()-1);
 
 		return find(regexDfa, fileName);
-		
+
 	}
-	
+
 	private DFA makeDfa(String regex) {
 		ParseTree regexTree;
 		try {
@@ -442,7 +451,7 @@ public class Interpreter2 {
 		DFA regexDfa = new DFA(regexNfa, regexNfa.getStartState());
 		return regexDfa;
 	}
-	
+
 	private List<StringMatch> find(DFA regex, String filename) {
 		try {
 
@@ -462,7 +471,7 @@ public class Interpreter2 {
 					regex.reset();
 					int nextInt;
 					endIndex = startIndex;
-					
+
 					while ((nextInt = lineReader.read()) != -1) {
 						// iterate over all the characters left in this line, so we get the longest match possible
 						Character next = (char) nextInt;
@@ -473,10 +482,10 @@ public class Interpreter2 {
 						regex.doTransition(next);
 						if (regex.isInAcceptState()) {
 							match = new StringMatch(matchingString.toString(), 
-													filename, 
-													fileReader.getLineNumber(), 
-													startIndex, 
-													endIndex + 1);
+									filename, 
+									fileReader.getLineNumber(), 
+									startIndex, 
+									endIndex + 1);
 							leftovers.clear();
 						}
 					}
@@ -505,10 +514,10 @@ public class Interpreter2 {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	private List<StringMatch> diff(List<StringMatch> strings1, List<StringMatch> strings2) {
 		ArrayList<StringMatch> differenceList = new ArrayList<StringMatch>();
-		
+
 		for(StringMatch s1: strings1)
 		{
 			if(getMatchesForValue(s1.value, strings2).size() == 0)
@@ -518,100 +527,111 @@ public class Interpreter2 {
 		}
 		return differenceList;
 	}
-	
+
 	private List<StringMatch> union(List<StringMatch> strings1, List<StringMatch> strings2) {
 		List<StringMatch> unionList = new ArrayList<StringMatch>();
-		
+
 		for(StringMatch s1: strings1)
 		{
 			unionList.add(s1);
 		}
-		
+
 		for(StringMatch s2: strings2)
 		{
 			if(!unionList.contains(s2)) unionList.add(s2);
 		}
-		
+
 		return unionList;
 	}
-	
+
 	private List<StringMatch> inters(List<StringMatch> strings1, List<StringMatch> strings2) {
 		List<StringMatch> intersList = new ArrayList<StringMatch>();
-		
+
 		//only look for matches with a certain value once
 		List<String> valuesInList = new ArrayList<String>();
-		
+
 		for(StringMatch s1: strings1)
 		{
 			//Already added all of strings1 and strings2 that matches this value
 			if(valuesInList.contains(s1.value)) continue;
-			
+
 			List<StringMatch> matches2 = getMatchesForValue(s1.value, strings2);
 			if(matches2.size() > 0) //If we find the value in both lists
 			{
 				List<StringMatch> matches1 = getMatchesForValue(s1.value, strings1);
-				
+
 				intersList.addAll(union(matches1, matches2)); //union all StringMatches for value from strings1 and strings2
 			}
 		}
-		
+
 		return intersList;
 	}
-	
-	private void printExpList(LL1AST expListNode)  {
-		// assume all nodes are some sorts of <exp>
+
+	private void printExpList(LL1AST expListNode) throws FileNotFoundException  {
 		// if <exp> is an integer
-		// prints out the integer value + a new line
+		// 	prints out the integer value + a new line
 		// else if <exp> is a string-match
-		// prints out the elements in order including the matched string, the filename, and the index
-		// else system-error
+		// 	prints out the elements in order including the matched string, the filename, and the index
 		// if the current node has children
-		// pass each child to the current function recursively
-		
-		if(expListNode!=null) {							
-			if(isIntegerAssignment(expListNode)) { 
-				// <statement> -> ID = <statement-tail> 
-				// <statement-tail> -> # <exp> ;
-				System.out.println("ID: " + expListNode.getChild(0).getChild(0).getValue() + " // Integer Value: " + getInteger(expListNode.getValue().toString()));
-				
-			} else if(isStringListAssignment(expListNode)) { // ID = <exp> ;
-				List<StringMatch> strMList = getStringList(expListNode.getValue().toString());
-					
-				for(int i=0; i<strMList.size(); i++) {
-					System.out.println("ID: " + expListNode.getChild(0).getChild(0).getValue() + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
-				}					
-				
+		// 	pass each child to the current function 
+
+		System.out.println(" ----- Come into printExpList ----- ");
+
+		if(expListNode!=null) {				
+			String id = null; // the only case <exp> meets an ID is "<exp> ::= ID  | ( <exp> )" which has an ID as the first child. 			
+
+			if (expListNode.getChild(0).getChild(0).getValue().equals(ID)) {
+				id = expListNode.getChild(0).getChild(0).getChild(0).getValue();
+			}
+
+			if (id!=null && expListNode.getChild(1).getChild(0).getValue().equals("epsilon")) {
+				if(intVars.containsKey(id)) { // if the first child was an ID
+					System.out.println("ID: " + id + " // Integer Value: " + getInteger(id));
+
+				} else if(stringListVars.containsKey(id)) { // if the first child was an ID
+					List<StringMatch> strMList = getStringList(id);
+
+					for(int i=0; i<strMList.size(); i++) { 
+						System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
+					}					
+				} else { 
+					throw new RuntimeException("Error: ID does not exist.");
+				}
 			} else {
-				System.err.print("Error: It was neither StringMatch nor Integer.");
+				throw new RuntimeException("Error: It was neither StringMatch nor Integer.");
 			}				
 		}
-			
-		if(expListNode.getChildren()!=null | !(expListNode.getChildren().isEmpty()) ) { /* If it does not have children, getChildren returns null or an empty list? */
-			for(LL1AST node: expListNode.getChildren())
-				printExpList(node);
+		
+		LL1AST expListTailNode = expListNode.getChild(1);
+
+		if( !expListTailNode.getChild(0).getValue().equals("epsilon") ) {
+			for(LL1AST node: expListTailNode.getChildren()) // since we do not exactly know the number of children of the current node (<exp> or <exp-list> or <exp-list-tail>)
+				if(node != null)
+					if(node.getValue().equals(EXP)) // only passes <exp> children to save time
+						printExpList(node);
 		}	
 	}
-	
+
 	private static boolean isStringListAssignment(LL1AST statementNode) {
 		if (!statementNode.getValue().equals(STATEMENT)) return false;
-		
+
 		// string list assignments:
 		// ID = <exp> ;
 		// <statement> -> ID = <statement-tail>
 		// <statement-tail> -> <exp> ;
 		if (statementNode.getChildren().size() != 3) return false;
 		if (statementNode.getChild(2).getChildren().size() != 2) return false;
-		
+
 		return (statementNode.getChild(0).getValue().equals(ID) 
 				&& statementNode.getChild(1).getValue().equals(EQUAL)
 				&& statementNode.getChild(2).getChild(0).getValue().equals(EXP)
 				&& statementNode.getChild(2).getChild(1).getValue().equals(SEMICOLON));
 	}
-	
-	
+
+
 	private boolean isIntegerAssignment(LL1AST statementNode) {
 		if (!statementNode.getValue().equals(STATEMENT)) return false;
-		
+
 		// int assignments:
 		// ID = # <exp> ;
 		// <statement> -> ID = <statement-tail>
@@ -619,17 +639,17 @@ public class Interpreter2 {
 		if (statementNode.getChildren().size()!=3) return false;
 		if (!statementNode.getChild(2).getValue().equals(STATEMENT_TAIL)) return false;
 		if (statementNode.getChild(2).getChildren().size()!=3) return false;
-		
+
 		return (statementNode.getChild(0).getValue().equals(ID) 
 				&& statementNode.getChild(1).getValue().equals(EQUAL)
 				&& statementNode.getChild(2).getChild(0).getValue().equals(INTEGER_VAR)
 				&& statementNode.getChild(2).getChild(1).getValue().equals(EXP)
 				&& statementNode.getChild(2).getChild(2).getValue().equals(SEMICOLON));
 	}
-	
+
 	private boolean isMaxFreqAssignment(LL1AST statementNode) {
 		if (!statementNode.getValue().equals(STATEMENT)) return false;
-		
+
 		// maxfreq assignments:
 		// ID = maxfreqstring ( ID ) ;
 		// <statement> -> ID = <statement-tail>
@@ -638,7 +658,7 @@ public class Interpreter2 {
 		if (!statementNode.getChild(2).getValue().equals(STATEMENT_TAIL)) return false;
 		if (statementNode.getChild(2).getChildren().size()!=5) return false;
 
-		
+
 		return (statementNode.getChild(0).getValue().equals(ID) 
 				&& statementNode.getChild(1).getValue().equals(EQUAL)
 				&& statementNode.getChild(2).getChild(0).getValue().equals(MAXFREQSTRING)
@@ -647,29 +667,29 @@ public class Interpreter2 {
 				&& statementNode.getChild(2).getChild(3).getValue().equals(")")
 				&& statementNode.getChild(2).getChild(4).getValue().equals(SEMICOLON));
 	}
-	
+
 
 	private boolean isReplace(LL1AST statementNode) {
 		// replace REGEX with ASCII-STR in <file-names> ;
 		if (!statementNode.getValue().equals(STATEMENT)) return false;
-		
+
 		return statementNode.getChild(0).getValue().equals(REPLACE);
 	}
-	
+
 	private boolean isRecursiveReplace(LL1AST statementNode) {
 		// recursivereplace REGEX with ASCII-STR in <file-names> ;
 		if (!statementNode.getValue().equals(STATEMENT)) return false;
-		
+
 		return statementNode.getChild(0).getValue().equals(RECURSIVEREPLACE);
 	}
-	
+
 	private boolean isPrint(LL1AST statementNode) {
 		// print ( <exp-list> ) ;
 		if (!statementNode.getValue().equals(STATEMENT)) return false;
-		
+
 		return statementNode.getChild(0).getValue().equals(PRINT);
 	}
-	
+
 	private static String readFile(File handle) throws IOException {
 		BufferedReader reader = new BufferedReader(new FileReader(handle));
 		String script = "";
@@ -680,7 +700,7 @@ public class Interpreter2 {
 		}
 		return script;
 	}
-	
+
 	// a little data wrapper representing a string and its metadata
 	private static class StringMatch implements Comparable<StringMatch> {
 		// <file-name, line, start-index, end-index>
@@ -693,7 +713,7 @@ public class Interpreter2 {
 			this.startIndex = startIndex;
 			this.endIndex = endIndex;
 		}
-		
+
 		public boolean equals(Object o){
 			if(!(o instanceof StringMatch)) return false;
 			return (this.compareTo((StringMatch)o) == 0);
@@ -714,7 +734,7 @@ public class Interpreter2 {
 			}
 			return this.value.compareTo(o.value);
 		}
-		
+
 		@Override
 		public String toString() {
 			return '"' + value + "\" <" + fileName + ", " + line + ", " + startIndex + ", " + endIndex + ">";

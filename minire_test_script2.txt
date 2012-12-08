@@ -1,0 +1,6 @@
+begin
+matches = find '[A-Z]([a-z])+' in "file1.txt" inters find '[A-Z]([a-z])+' in "file2.txt";
+n_matches = #matches;
+print (n_matches);
+replace '[A-Z]([a-z])+' with "" in "file1.txt" >! "file3.txt";   
+end

@@ -68,12 +68,7 @@ public class MiniReLL1Parser {
 	private String top;
 	private Nonterminal currNT;
 
-	private ArrayList<String> leftDUI;
-	private ArrayList<String> rightDUI;
-	private String asciiStrTemp;
-
 	private LL1AST root;
-	private LL1AST currNode;
 
 	public MiniReLL1Parser(String script) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
 		LL1ParserGenerator miniRE = new LL1ParserGenerator(MINI_RE_SPEC);
@@ -90,11 +85,10 @@ public class MiniReLL1Parser {
 		if (!isValid(program)) throw new InvalidProgramException();
 		System.out.println(isValid(program));
 		constructAST();
-		
 	}
-	
-	
-	
+
+
+
 	public LL1AST getRoot() { return root; }
 	public LL1ParsingTable getParsingTable() { return table; }
 	public ArrayList<Nonterminal> getNonterminals() { return nonterminals; }
@@ -103,7 +97,32 @@ public class MiniReLL1Parser {
 	public Nonterminal getStart() {return start;}
 	public HashMap<String,Nonterminal> getNonterminalMap() { return nonterminalMap; }
 
-	
+	public String toString() {
+		String ast = "";
+		LL1AST curr = root;
+		ast += root.getValue() + "\n";
+		for (LL1AST child : curr.getChildren()) {
+			if (child!= null) {
+				ast += child.getValue() + "   ";
+			}
+		}
+		ast += "\n";
+		for (LL1AST child : curr.getChild(1).getChildren()) {
+			if (child!= null) {
+				ast += child.getValue() + "   ";
+			}
+		}
+		curr = curr.getChild(1).getChild(0);
+		ast += "\n";
+		for (LL1AST child : curr.getChildren()) {
+			if (child!= null) {
+				ast += child.getValue() + "   ";
+			}
+		}
+		return ast;
+	}
+
+
 	private void parse(String inputProgram) throws IOException, InvalidProgramException {
 		BufferedReader br = new BufferedReader(new FileReader(new File(inputProgram)));
 		String curr;
@@ -144,7 +163,6 @@ public class MiniReLL1Parser {
 			// top = parsingStack.pop();
 			currNT = nonterminalMap.get(start.getValue());
 			constructAST(currNode);
-			convertASTtoParseTree();
 		}
 	}
 
@@ -162,13 +180,28 @@ public class MiniReLL1Parser {
 			List<LL1AST> children = new ArrayList<LL1AST>();
 			for (int i=0; i<rule.length; i++) {
 				children.add(new LL1AST(rule[i]));
-				// parsingStack.pop();
 			}
 			node.setChildren(children);
+			
 			for (LL1AST child : children) {
-				child.addChild(constructAST(child));
-				// input = inputStack.pop();
+				LL1AST grandchild = constructAST(child);
+				if (grandchild.getValue().equals(child.getValue())) {
+					boolean matchFound = false;
+					Nonterminal nt = nonterminalMap.get(child.getValue());
+					if (nt!=null) {
+					for (String[] r : nt.getRules()) { // no left factor
+						if (r[0].equals(child.getChild(0).getValue())) {
+							matchFound = true;
+						}
+					}
+					}
+					if (!matchFound) {
+						child.addChild(grandchild);
+					}
+				} else child.addChild(grandchild);
 			}
+			
+						
 			return node;
 
 		}
@@ -183,16 +216,41 @@ public class MiniReLL1Parser {
 			// if (rule==null) throw new RuleApplicabilityException();
 			if (rule!=null) {
 				parsingStack.pop();
-				pushRule(rule);
 				List<LL1AST> children = new ArrayList<LL1AST>();
-				for (int i=0; i<rule.length; i++) {
-					children.add(new LL1AST(rule[i]));
-					// parsingStack.pop();
-				}
-				node.setChildren(children);
-				for (LL1AST child : children) {
-					child.addChild(constructAST(child));
-					// input = inputStack.pop();
+				if (rule.length==1 && rule[0].equals(EPSILON)) {
+					node.addChild(new LL1AST(EPSILON, true));
+				} else {
+					pushRule(rule);
+					// children = new ArrayList<LL1AST>();
+					for (int i=0; i<rule.length; i++) {
+						children.add(new LL1AST(rule[i]));
+						// parsingStack.pop();
+					}
+					node.setChildren(children);
+					/*
+					for (LL1AST child : children) {
+						child.addChild(constructAST(child));
+						// input = inputStack.pop();
+					} 
+					*/
+					for (LL1AST child : children) {
+						LL1AST grandchild = constructAST(child);
+						if (grandchild.getValue().equals(child.getValue())) {
+							boolean matchFound = false;
+							Nonterminal nt = nonterminalMap.get(child.getValue());
+							if (nt!=null) {
+							for (String[] r : nt.getRules()) { // no left factor
+								if (r[0].equals(child.getChild(0).getValue())) {
+									matchFound = true;
+								}
+							}
+							}
+							if (!matchFound) {
+								child.addChild(grandchild);
+							}
+						} else child.addChild(grandchild);
+					}
+					
 				}
 				return node;
 			} else if (currNT.getValue().equals(parsingStack.peek())) { 
@@ -206,14 +264,16 @@ public class MiniReLL1Parser {
 							// parsingStack.pop();
 						}
 						node.setChildren(children);
+						
 						for (LL1AST child : children) {
-							child.addChild(constructAST(child));
-							// input = inputStack.pop();
+							LL1AST grandchild = constructAST(child); 
+							child.addChild(grandchild);
 						}
+						
 						return node;
 					}
 				}
-				
+
 			}
 		}
 
@@ -239,7 +299,7 @@ public class MiniReLL1Parser {
 			if (!inputStack.isEmpty()) curr = inputStack.pop();
 			return node;
 		}
-		
+
 		if (isASCII(curr) && !skip) {
 			// LL1AST temp = new LL1AST(REGEX);
 			// temp.addChild(new LL1AST(curr,true));
@@ -250,7 +310,7 @@ public class MiniReLL1Parser {
 			if (!inputStack.isEmpty()) curr = inputStack.pop();
 			return node;
 		}
-		
+
 		if (parsingStack.peek().equals(EPSILON)) {
 			node.addChild(new LL1AST(curr, true));
 			parsingStack.pop();
@@ -264,82 +324,7 @@ public class MiniReLL1Parser {
 			return node;
 		}
 
-
-
-
-
 		return node;
-	}
-
-	private void convertASTtoParseTree() {
-		ParseTree ptRoot = convertASTtoParseTree(root);
-	}
-	
-	private ParseTree convertASTtoParseTree(LL1AST astNode) {
-		ParseTree ptNode = null;
-		Symbol s;
-		if (nonterminalMap.containsKey(astNode.getValue())) {
-			s = matchNonterminalSymbol(astNode.getValue());
-		} else if (isRegEx(astNode.getValue())) {
-			
-		} else if (isID(astNode.getValue())) {
-			
-		} else if (isASCII(astNode.getValue())) {
-			
-		} else if (tokens.contains(astNode.getValue())) {
-			s = matchReservedWordSymbol(astNode.getValue());
-		}
-		
-		return ptNode;
-		
-	}
-	
-	private List<LL1AST> addRuleAsChild(String[] rule) {
-		List<LL1AST> children = new ArrayList<LL1AST>();
-		for (int i=0; i<rule.length; i++) {
-
-			children.add(new LL1AST(rule[i]));
-		}
-		return children;
-	}
-
-	private Symbol.NonterminalMiniReSymbol matchNonterminalSymbol(String nt) {
-		if (nt.equals("<MiniRE-program>")) return Symbol.NonterminalMiniReSymbol.MINIRE_PROGRAM;
-		if (nt.equals("<statement-list>")) return Symbol.NonterminalMiniReSymbol.STATEMENT_LIST;
-		if (nt.equals("<statement-list-tail>")) return Symbol.NonterminalMiniReSymbol.STATEMENT_LIST_TAIL;
-		if (nt.equals("<statement>")) return Symbol.NonterminalMiniReSymbol.STATEMENT;
-		if (nt.equals("<statement-tail>")) return Symbol.NonterminalMiniReSymbol.STATEMENT_TAIL;
-		if (nt.equals("<file-names>")) return Symbol.NonterminalMiniReSymbol.FILE_NAMES;
-		if (nt.equals("<source-file>")) return Symbol.NonterminalMiniReSymbol.SOURCE_FILE;
-		if (nt.equals("<destination-file>")) return Symbol.NonterminalMiniReSymbol.DESTINATION_FILE;
-		if (nt.equals("<exp-list>")) return Symbol.NonterminalMiniReSymbol.EXP_LIST;
-		if (nt.equals("<exp-list-tail>")) return Symbol.NonterminalMiniReSymbol.EXP_LIST_TAIL;
-		if (nt.equals("<exp>")) return Symbol.NonterminalMiniReSymbol.EXP;
-		if (nt.equals("<exp-tail>")) return Symbol.NonterminalMiniReSymbol.EXP_TAIL;
-		if (nt.equals("<term>")) return Symbol.NonterminalMiniReSymbol.TERM;
-		if (nt.equals("<file-name>")) return Symbol.NonterminalMiniReSymbol.FILE_NAME;
-		if (nt.equals("<bin-op>")) return Symbol.NonterminalMiniReSymbol.BIN_OP;
-		return null;
-	}
-
-	private Symbol.ReservedWord matchReservedWordSymbol(String rw) {
-		if (rw.equals(BEGIN)) return Symbol.ReservedWord.BEGIN;
-		if (rw.equals(END)) return Symbol.ReservedWord.END;
-		if (rw.equals(EQUAL)) return Symbol.ReservedWord.ASSIGN;
-		if (rw.equals(REPLACE)) return Symbol.ReservedWord.REPLACE;
-		if (rw.equals(WITH)) return Symbol.ReservedWord.WITH;
-		if (rw.equals(IN)) return Symbol.ReservedWord.IN;
-		if (rw.equals(SEMICOLON)) return Symbol.ReservedWord.SEMICOLON;
-		if (rw.equals(RECURSIVEREPLACE)) return Symbol.ReservedWord.RECURSIVE_REPLACE;
-		if (rw.equals(WRITE_TO)) return Symbol.ReservedWord.WRITE_TO;
-		if (rw.equals(PRINT)) return Symbol.ReservedWord.PRINT;
-		if (rw.equals(INTEGER_VAR)) return Symbol.ReservedWord.INT;
-		if (rw.equals(FIND)) return Symbol.ReservedWord.FIND;
-		if (rw.equals(DIFF)) return Symbol.ReservedWord.DIFF;
-		if (rw.equals(UNION)) return Symbol.ReservedWord.UNION;
-		if (rw.equals(INTERS)) return Symbol.ReservedWord.INTERS;
-		if (rw.equals(MAXFREQSTRING)) return Symbol.ReservedWord.MAXFREQSTRING;
-		return null;
 	}
 
 	public boolean isValid(ArrayList<String> program) throws InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException {
@@ -473,238 +458,6 @@ public class MiniReLL1Parser {
 		return out;
 	}
 
-	private void handleID() {
-
-	}
-
-	private void handleRegEx() {
-
-	}
-
-	private void handleASCII() {
-
-	}
-
-	private void handleReplace() throws InputRuleMismatchException {
-		String[] params = replaceHelper();
-		doReplace(params[0],params[1],params[2],params[3]);
-	}
-
-	private void handleRecursivereplace() throws InputRuleMismatchException {
-		String[] params = replaceHelper();
-		doRecursivereplace(params[0],params[1],params[2],params[3]);
-	}
-
-	private String[] replaceHelper() throws InputRuleMismatchException {
-		String[] out = new String[4];
-		if (!top.equals(REGEX) || !isRegEx(curr)) throw new InputRuleMismatchException();
-		out[0] = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(WITH) || !curr.equals(WITH)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(ASCII_STR) || !isASCII(curr)) throw new InputRuleMismatchException();
-		out[1] = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(IN) || !curr.equals(IN)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(ASCII_STR) || !isASCII(curr)) throw new InputRuleMismatchException();
-		out[2] = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(WRITE_TO) || !curr.equals(WRITE_TO)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(ASCII_STR) || !isASCII(curr)) throw new InputRuleMismatchException();
-		out[3] = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(SEMICOLON) || !curr.equals(SEMICOLON)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		return out;
-	}
-
-	private void doReplace(String regex, String replacement, String fileIn, String fileOut) {
-
-	}
-
-	private void doRecursivereplace(String regex, String replacement, String fileIn, String fileOut) {
-
-	}
-
-	private void handleFind() throws InputRuleMismatchException {
-		ArrayList<ArrayList<String>> found = new ArrayList<ArrayList<String>>();
-
-		String[] params = findHelper();
-		found.add(doFind(params[0],params[1]));
-
-		if (top.equals(SEMICOLON)) {
-			if(!curr.equals(SEMICOLON)) throw new InputRuleMismatchException();
-			inputStack.pop();
-			parsingStack.pop();
-			top = parsingStack.peek();
-			curr = inputStack.peek();
-			// handle output
-		} else if (top.equals(DIFF) || top.equals(INTERS) || top.equals(UNION)) {
-			if(!curr.equals(DIFF) || !curr.equals(INTERS) || !curr.equals(UNION)) throw new InputRuleMismatchException();
-			inputStack.pop();
-			parsingStack.pop();
-			top = parsingStack.peek();
-			if (curr.equals(DIFF)) {
-				curr = inputStack.peek();
-				String[] params2 = findHelper();
-			} else if (curr.equals(INTERS)) {
-				curr = inputStack.peek();
-			} else {
-				curr = inputStack.peek();
-			}
-
-
-		}
-
-	}
-
-	private String[] findHelper() throws InputRuleMismatchException {
-		String[] out = new String[2];
-		if (!top.equals(REGEX) || !isRegEx(curr)) throw new InputRuleMismatchException();
-		out[0] = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(IN) || !curr.equals(IN)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(ASCII_STR) || !isASCII(curr)) throw new InputRuleMismatchException();
-		out[1] = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		return out;
-	}
-
-	private ArrayList<String> doFind(String regex, String fileIn) {
-		return null;
-	}
-
-	private void handleMaxfreqstring() throws InputRuleMismatchException {
-		String idStr;
-		if (!top.equals(OPEN_PAR) || !isRegEx(OPEN_PAR)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(ID) || !isID(curr)) throw new InputRuleMismatchException();
-		idStr = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(CLOSE_PAR) || !isRegEx(CLOSE_PAR)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(SEMICOLON) || !curr.equals(SEMICOLON)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		doMaxfreqstring(idStr);
-	}
-
-	private void doMaxfreqstring(String ideStr) {
-
-	}
-
-	private void handlePrint() throws InputRuleMismatchException {
-		String idStr;
-		if (!top.equals(OPEN_PAR) || !isRegEx(OPEN_PAR)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!nonterminalMap.containsKey(top)) throw new InputRuleMismatchException();
-
-
-
-		if (!top.equals(ID) || !isID(curr)) throw new InputRuleMismatchException();
-		idStr = curr.substring(1, curr.length()-1);
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(CLOSE_PAR) || !isRegEx(CLOSE_PAR)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-
-		if (!top.equals(SEMICOLON) || !curr.equals(SEMICOLON)) throw new InputRuleMismatchException();
-		inputStack.pop();
-		parsingStack.pop();
-		top = parsingStack.peek();
-		curr = inputStack.peek();
-		doPrint();
-	}
-
-	private void doPrint() {
-
-	}
-
-	private boolean isID(int i) {
-		return tokens.contains(program.get(i)) && !isRegEx(i) && !isASCII(i);
-	}
-
-	private boolean isRegEx(int i) {
-		return program.get(i).startsWith("\'") && program.get(i).endsWith("\'"); 
-
-	}
-
-	private boolean isASCII(int i) {
-		return program.get(i).startsWith("\"") && program.get(i).endsWith("\"");
-	}
-
 	private boolean isID(String s) {
 		return !tokens.contains(s) && !isRegEx(s) && !isASCII(s);
 	}
@@ -721,6 +474,7 @@ public class MiniReLL1Parser {
 	public static void main(String[] args) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
 		MiniReLL1Parser miniRE = new MiniReLL1Parser("minire_test_script.txt");
 		// miniRE.parse("minire_test_script.txt");
+		System.out.println(miniRE.toString());
 	}
 
 }
