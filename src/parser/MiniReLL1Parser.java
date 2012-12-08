@@ -78,12 +78,12 @@ public class MiniReLL1Parser {
 		tokens = miniRE.getTokens();
 		ruleMap = miniRE.getRuleMap();
 		nonterminalMap = miniRE.getNonterminalMap();
-		System.out.println(miniRE.printFirstSets());
-		System.out.println(miniRE.printFollowSets());
-		System.out.println(miniRE.toString());
+		// System.out.println(miniRE.printFirstSets());
+		// System.out.println(miniRE.printFollowSets());
+		// System.out.println(miniRE.toString());
 		parse(script);
 		if (!isValid(program)) throw new InvalidProgramException();
-		System.out.println(isValid(program));
+		// System.out.println(isValid(program));
 		constructAST();
 	}
 
@@ -96,32 +96,6 @@ public class MiniReLL1Parser {
 	public ArrayList<String> getTokens() { return tokens; }
 	public Nonterminal getStart() {return start;}
 	public HashMap<String,Nonterminal> getNonterminalMap() { return nonterminalMap; }
-
-	public String toString() {
-		String ast = "";
-		LL1AST curr = root;
-		ast += root.getValue() + "\n";
-		for (LL1AST child : curr.getChildren()) {
-			if (child!= null) {
-				ast += child.getValue() + "   ";
-			}
-		}
-		ast += "\n";
-		for (LL1AST child : curr.getChild(1).getChildren()) {
-			if (child!= null) {
-				ast += child.getValue() + "   ";
-			}
-		}
-		curr = curr.getChild(1).getChild(0);
-		ast += "\n";
-		for (LL1AST child : curr.getChildren()) {
-			if (child!= null) {
-				ast += child.getValue() + "   ";
-			}
-		}
-		return ast;
-	}
-
 
 	private void parse(String inputProgram) throws IOException, InvalidProgramException {
 		BufferedReader br = new BufferedReader(new FileReader(new File(inputProgram)));
@@ -154,14 +128,12 @@ public class MiniReLL1Parser {
 
 
 		currNT = start;
-		String[] rule = null;
 		LL1AST currNode = root;
-		// List<LL1AST> children = constructAST(root, curr);
 
 		while (!parsingStack.isEmpty()) {
 			curr = inputStack.pop();
 			// top = parsingStack.pop();
-			currNT = nonterminalMap.get(start.getValue());
+			currNT = nonterminalMap.get(currNT.getValue());
 			constructAST(currNode);
 		}
 	}
@@ -196,7 +168,7 @@ public class MiniReLL1Parser {
 					}
 					}
 					if (!matchFound) {
-						child.addChild(grandchild);
+						if ( (!grandchild.getValue().equals(child.getValue())) || grandchild.isLeaf ) child.addChild(grandchild);
 					}
 				} else child.addChild(grandchild);
 			}
@@ -267,7 +239,7 @@ public class MiniReLL1Parser {
 						
 						for (LL1AST child : children) {
 							LL1AST grandchild = constructAST(child); 
-							child.addChild(grandchild);
+							if (!grandchild.getValue().equals(child.getValue())) child.addChild(grandchild);
 						}
 						
 						return node;
@@ -471,10 +443,11 @@ public class MiniReLL1Parser {
 		return s.startsWith("\"") && s.endsWith("\"");
 	}
 
+	/*
 	public static void main(String[] args) throws FileNotFoundException, IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
 		MiniReLL1Parser miniRE = new MiniReLL1Parser("minire_test_script.txt");
 		// miniRE.parse("minire_test_script.txt");
 		System.out.println(miniRE.toString());
 	}
-
+	 */
 }

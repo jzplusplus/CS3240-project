@@ -29,8 +29,6 @@ public class InterpreterLL1Test {
 	 */
 	public static void main(String[] args) throws IOException, ParseException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
 		InterpreterLL1 miniRE = new InterpreterLL1("minire_test_script2.txt");
-		
-
 	}
 
 }

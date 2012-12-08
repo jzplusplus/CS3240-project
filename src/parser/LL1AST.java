@@ -78,21 +78,4 @@ public class LL1AST {
 	public void setLeaf(boolean isLeaf) {
 		this.isLeaf = isLeaf;
 	}
-	
-	public void print() {
-		print(0);
-	}
-	
-
-	private void print(int level) {
-		for (int i = 0; i < level; i++) {
-			System.out.print("|   ");
-		}
-		System.out.println("+---" + getValue());
-		for (int i = 0; i < this.children.size(); i++) {
-			children.get(i).print(level + 1);
-		}
-	}
-	
-	
 }

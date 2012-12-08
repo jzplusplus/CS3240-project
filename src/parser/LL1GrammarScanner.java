@@ -256,7 +256,8 @@ public class LL1GrammarScanner {
 	public HashMap<Nonterminal,ArrayList<String[]>> getRuleMap() { return ruleMap; } 
 	public Nonterminal getStartSymbol() { return start; }
 	public HashMap<String,Nonterminal> getNonterminalMap() { return nonterminalMap; }
-		
+	
+	/*
 	public static void main(String[] arg) throws IOException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException {
 		String filename = "MiniRE_Grammar3.txt";
 
@@ -266,5 +267,6 @@ public class LL1GrammarScanner {
 		System.out.println(scanner.printRuleMap());
 		
 	}
+	*/
 	
 }
