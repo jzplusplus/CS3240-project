@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+
+
 import parser.LL1AST;
 import parser.MiniReLL1Parser;
 import parser.MiniReParser;
@@ -48,6 +50,9 @@ public class InterpreterLL1 {
 	// DON'T access these directly: instead, use assignStringList / assignInteger, etc.
 	private Map<String, List<StringMatch>> stringListVars;
 	private Map<String, Integer> intVars;
+
+	private String g_src_filename = null; // added for printExpList
+
 
 	private static String MINI_RE_PROGRAM = "<MiniRE-program>"; 
 	private static String STATEMENT_LIST = "<statement-list>";
@@ -156,7 +161,11 @@ public class InterpreterLL1 {
 				// maxfreqstring assignment
 				// ID1 = maxfreqstring ( ID2 ) ;
 				// first, find the maxfreqstring(s) of ID2, then call assignStringList(id1, maxFreqString);
-				throw new UnsupportedOperationException("TODO: max freq string assignment");
+				String id1 = node.getChild(0).getChild(0).getValue();
+				String id2 = node.getChild(2).getChild(2).getChild(0).getValue();
+								
+				List<StringMatch> maxFreqString = getMaxFreqString(getStringList(id2));
+				assignStringList(id1, maxFreqString);
 
 
 			} else if (isReplace(node) || isRecursiveReplace(node)) {
@@ -209,6 +218,26 @@ public class InterpreterLL1 {
 		stringListVars.put(id, value);
 	}
 
+	
+	private List<StringMatch> getMaxFreqString(List<StringMatch> stringList) {		
+		if(stringList.size() == 0) return new ArrayList<StringMatch>();
+		
+		StringMatch maxFreqString = null;
+		int maxFreq = 0;
+		
+		for(StringMatch s: stringList) {
+			int freq = getMatchesForValue(s.value, stringList).size();
+			if(freq > maxFreq) {
+				maxFreq = freq;
+				maxFreqString = s;
+			}
+		}
+
+		//return ALL matches of the String with the most frequency
+		List<StringMatch> list = getMatchesForValue(maxFreqString.value, stringList);
+		return list;
+	}
+	
 	private List<StringMatch> getStringList(String id) { // TODO maybe throw exception on invalid key
 		return stringListVars.get(id);
 	}
@@ -423,6 +452,7 @@ public class InterpreterLL1 {
 		String regex = termNode.getChild(1).getChild(0).getValue();
 		if (regex.startsWith("\'")) regex = regex.substring(1);
 		if (regex.endsWith("\'")) regex = regex.substring(0, regex.length()-1);
+		System.out.println("regex being parsed:" + regex);
 		DFA regexDfa = makeDfa(regex);
 
 		// then, scan the filename for strings that match the regex.
@@ -590,7 +620,7 @@ public class InterpreterLL1 {
 					List<StringMatch> strMList = getStringList(id);
 
 					for(int i=0; i<strMList.size(); i++) { 
-						System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString());
+						System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
 					}					
 				} else { 
 					throw new RuntimeException("Error: ID does not exist.");
