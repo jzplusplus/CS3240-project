@@ -110,17 +110,11 @@ public class InterpreterLL1 {
 		// otherwise, assume the value is one of the MiniRE nonterminals.
 
 		Nonterminal nt = nonterminalMap.get(node.getValue());
-
-		switch (nt.getValue()) {
-		// the only thing we'll want to parse and run are STATEMENTs.
-		// for everything else, either recurse or handle as part of STATEMENT.
-
-		case "<MiniRE-program>":
+		String value = nt.getValue();
+		if ("<MiniRE-program>".equals(nt.getValue())) {
 			// begin <statement-list> end: recurse on children[1]
 			run(node.getChild(1));
-			break;
-		case "<statement-list>":
-		case "<statement-list-tail>": // we'll handle these both the same way
+		} else if ("<statement-list>".equals(nt.getValue()) || "<statement-list-tail>".equals(nt.getValue())) {
 			// <statement><statement-list-tail>: recurse on both. tail might be null.
 			// <statement>
 			run(node.getChild(0));
@@ -128,9 +122,7 @@ public class InterpreterLL1 {
 				// <statement-list-tail>
 				run(node.getChild(1));
 			}
-			break;
-
-		case "<statement>":
+		} else if ("<statement>".equals(nt.getValue())) {
 			// there are only a few kinds of statements:
 			// string list assignment
 			if (isStringListAssignment(node)) {
@@ -195,9 +187,6 @@ public class InterpreterLL1 {
 				//  print each of the <exp>s that make up <exp-list>
 				printExpList(node.getChild(2));
 			}
-
-			break;
-
 		}
 
 	}
@@ -407,18 +396,13 @@ public class InterpreterLL1 {
 				// then, let's figure out which operator we're using and call it.
 				LL1AST binaryOperatorNode = expTailNode.getChild(0).getChild(0);
 
-				// ReservedWord binaryOperator = (ReservedWord) binaryOperatorNode.getChild(0).getValue();
-				switch (binaryOperatorNode.getValue()) {
-				case "diff":
+				if ("diff".equals(binaryOperatorNode.getValue())) {
 					toReturn = diff(toReturn, term);
-					break;
-				case "union":
+				} else if ("union".equals(binaryOperatorNode.getValue())) {
 					toReturn = union(toReturn, term);
-					break;
-				case "inters":
+				} else if ("inters".equals(binaryOperatorNode.getValue())) {
 					toReturn = inters(toReturn, term);
-					break;
-				default:
+				} else {
 					throw new RuntimeException("Found invalid binary operator: " + binaryOperatorNode.getValue());
 				}
 				// now, update expTailNode, or break if we're at the bottom of the tree.
