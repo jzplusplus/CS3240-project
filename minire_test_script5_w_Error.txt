@@ -1,3 +1,0 @@
-begin
-replace '[0-9]'with "REPLACED" in "longest_file.txt" >! "long_output.txt";   
-end

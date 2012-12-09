@@ -1,0 +1,4 @@
+begin
+matches = find '[0-9]' in "long_file.txt";   
+print( matches )
+end

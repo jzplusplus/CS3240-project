@@ -1,4 +1,4 @@
 begin
-matches = find '[A-Z]([a-z])+([0-9])*' in "long_file.txt" inters find '[A-Z]([a-z])+([0-9])*' in "long_file.txt";
+matches = find '[A-Z]([a-z])+([0-9])*' in "longer_file.txt" inters find '[A-Z]([a-z])+([0-9])*' in "long_file.txt";
 print (matches);
 end
