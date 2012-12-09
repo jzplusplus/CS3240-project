@@ -128,8 +128,11 @@ public class Interpreter {
 				// maxfreqstring assignment
 				// ID1 = maxfreqstring ( ID2 ) ;
 				// first, find the maxfreqstring(s) of ID2, then call assignStringList(id1, maxFreqString);
-				throw new UnsupportedOperationException("TODO: max freq string assignment");
-
+				String id1 = node.getChild(0).getValue().getValue();
+				String id2 = node.getChild(2).getChild(2).getValue().getValue();
+				
+				List<StringMatch> maxFreqString = getMaxFreqString(getStringList(id2));
+				assignStringList(id1, maxFreqString);
 				
 			} else if (isReplace(node) || isRecursiveReplace(node)) {
 				// replace REGEX with ASCII-STR in <file-names> ;
@@ -161,6 +164,25 @@ public class Interpreter {
 		
 		}
 		
+	}
+
+	private List<StringMatch> getMaxFreqString(List<StringMatch> stringList) {		
+		if(stringList.size() == 0) return new ArrayList<StringMatch>();
+		
+		StringMatch maxFreqString = null;
+		int maxFreq = 0;
+		
+		for(StringMatch s: stringList) {
+			int freq = getMatchesForValue(s.value, stringList).size();
+			if(freq > maxFreq) {
+				maxFreq = freq;
+				maxFreqString = s;
+			}
+		}
+
+		//return ALL matches of the String with the most frequency
+		List<StringMatch> list = getMatchesForValue(maxFreqString.value, stringList);
+		return list;
 	}
 
 	private void recursiveReplace(String regex, String substitution,
