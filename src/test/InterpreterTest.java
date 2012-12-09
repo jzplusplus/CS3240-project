@@ -41,9 +41,8 @@ public class InterpreterTest {
 		Interpreter i4 = new Interpreter( 
 			"begin" + 
 			"matches = find '[A-Z]' in \"long_file.txt\" inters find '[A-Z]' in \"longer_file.txt\";" + 
-			"n_matches = #matches;" +
-			"print (n_matches);" +
-			"replace '[0-9]' with \"REPLACED\" in \"longest_file.txt\" >! \"long_output.txt\";" +    
+			"print (matches);" +
+			"replace '[0-9]' with \"REPLACED\" in \"long_file.txt\" >! \"long_output2.txt\";" +    
 			"end");
 
 		
