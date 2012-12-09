@@ -36,12 +36,9 @@ public class Interpreter {
 	// DON'T access these directly: instead, use assignStringList / assignInteger, etc.
 	private Map<String, List<StringMatch>> stringListVars;
 	private Map<String, Integer> intVars;
-	
-	private String g_src_filename = null; // added for printExpList
-	
+		
 	public Interpreter(File scriptHandle) throws IOException, ParseException {
 		this(readFile(scriptHandle));
-		g_src_filename = scriptHandle.getName(); 
 	}
 	
 	public Interpreter(String script) throws IOException, ParseException {
@@ -538,7 +535,7 @@ public class Interpreter {
 				List<StringMatch> strMList = getStringList(id);
 					
 				for(int i=0; i<strMList.size(); i++) { 
-					System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
+					System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString());
 				}					
 				
 			}else {

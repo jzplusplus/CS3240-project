@@ -49,9 +49,6 @@ public class InterpreterLL1 {
 	private Map<String, List<StringMatch>> stringListVars;
 	private Map<String, Integer> intVars;
 
-	private String g_src_filename = null; // added for printExpList
-
-
 	private static String MINI_RE_PROGRAM = "<MiniRE-program>"; 
 	private static String STATEMENT_LIST = "<statement-list>";
 	private static String STATEMENT_LIST_TAIL = "<statement-list-tail>";
@@ -593,7 +590,7 @@ public class InterpreterLL1 {
 					List<StringMatch> strMList = getStringList(id);
 
 					for(int i=0; i<strMList.size(); i++) { 
-						System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
+						System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString());
 					}					
 				} else { 
 					throw new RuntimeException("Error: ID does not exist.");

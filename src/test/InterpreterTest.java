@@ -30,12 +30,22 @@ public class InterpreterTest {
 				"baz = find '(mentor | Mentor)' in \"file1.txt\" inters find '(balloons)' in \"file1.txt\";" +
 				"end");*/
 		
-		Interpreter i3 = new Interpreter(
+		/*Interpreter i3 = new Interpreter(
 				"begin" +
 				"replace '[aeiou]' with \"oo\" in \"file1.txt\" >! \"foobar.txt\";" +
 				"foo = find '(oon)' in \"foobar.txt\" union find '(oor)' in \"foobar.txt\" union find '(oos)' in \"foobar.txt\";" +
 				"bar = maxfreqstring(foo);" +
-				"end");
+				"end");*/
+		
+		// **it somehow gives "exception.ParseException: Error matching string: couldn't find find"**
+		Interpreter i4 = new Interpreter( 
+			"begin" + 
+			"matches = find '[A-Z]' in \"long_file.txt\" inters find '[A-Z]' in \"longer_file.txt\";" + 
+			"n_matches = #matches;" +
+			"print (n_matches);" +
+			"replace '[0-9]' with \"REPLACED\" in \"longest_file.txt\" >! \"long_output.txt\";" +    
+			"end");
+
 		
 	} // failed on [A-Z](a-z)+. I think the problem is in DFA
 
