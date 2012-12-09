@@ -28,8 +28,20 @@ public class InterpreterLL1Test {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws IOException, ParseException, MultipleStartSymbolException, IncorrectRuleFormatException, UndefinedNonterminalException, InputRuleMismatchException, RuleApplicabilityException, InvalidTokenException, InvalidProgramException {
-		// InterpreterLL1 miniRE = new InterpreterLL1("minire_test_script4.txt", "grammar.txt");
-		InterpreterLL1 miniRE2 = new InterpreterLL1("maxFreqTest.txt", "grammar.txt");
+		InterpreterLL1 test1 = new InterpreterLL1("minire_test_script.txt", "grammar.txt");
+		System.out.println();
+		InterpreterLL1 test2 = new InterpreterLL1("minire_test_script2.txt", "grammar.txt");
+		System.out.println();
+		InterpreterLL1 test3 = new InterpreterLL1("minire_test_script3.txt", "grammar.txt");
+		System.out.println();
+		InterpreterLL1 test4 = new InterpreterLL1("minire_test_script4.txt", "grammar.txt");
+		System.out.println();
+		InterpreterLL1 test5 = new InterpreterLL1("minire_test_script5.txt", "grammar.txt");
+		System.out.println();
+		InterpreterLL1 test6 = new InterpreterLL1("minire_test_script6.txt", "grammar.txt");
+		System.out.println();
+		InterpreterLL1 testMaxFreq = new InterpreterLL1("maxFreqTest.txt", "grammar.txt");
+				
 	}
 
 }

@@ -1,0 +1,5 @@
+begin 
+replace '[aeiou]' with "oo" in "file1.txt" >! "foobar.txt" ; 
+foo = find '(oon)' in "foobar.txt" union find '(oor)' in "foobar.txt" union find '(oos)' in "foobar.txt" ;
+bar = maxfreqstring ( foo ) ;
+end

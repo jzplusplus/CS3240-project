@@ -1,9 +1,17 @@
 package test;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import exception.ParseException;
+
+import base.NFABuilder;
+
+import parser.ParseTree;
+import parser.RegexParser;
 
 import util.DFA;
 import util.NFA;
@@ -13,8 +21,10 @@ public class NFAtoDFAtest {
 
 	/**
 	 * @param args
+	 * @throws IOException 
+	 * @throws ParseException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws ParseException, IOException {
 				
 		//////////////////////////////////////////////////////
 		//////////////////// TEST CASE 1 ////////////////////
@@ -160,6 +170,20 @@ public class NFAtoDFAtest {
 		System.out.println("Is 'bb' legal? " + dfa3.canAccept("bb"));
 		System.out.println("Is 'aabbaabababab' legal? " + dfa3.canAccept("aabbaabababab"));
 		System.out.println("Is 'abababbbabbba' legal? " + dfa3.canAccept("abababbbabbba"));
+		
+		
+		//////////////////////////////////////////////////////
+		//////////////////// TEST CASE 4 ////////////////////
+		//////////////////////////////////////////////////////
+		
+		ParseTree t = RegexParser.parse("([a-zA-Z])*ment([a-zA-Z])*", new HashMap());
+		t.print();
+		NFABuilder nfaB = new NFABuilder(new HashMap(), true);
+		NFA n = nfaB.build(t);
+		System.out.println(n);
+		
+		DFA dfa4 = new DFA(n, n.getStartState());
+		System.out.println(dfa4);
 	
 	}
 }

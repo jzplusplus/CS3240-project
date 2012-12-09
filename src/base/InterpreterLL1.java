@@ -11,9 +11,7 @@ import java.io.LineNumberReader;
 import java.io.PushbackReader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -22,11 +20,9 @@ import java.util.Stack;
 
 import parser.LL1AST;
 import parser.MiniReLL1Parser;
-import parser.MiniReParser;
 import parser.Nonterminal;
 import parser.ParseTree;
 import parser.RegexParser;
-import parser.Symbol.NonterminalMiniReSymbol;
 import util.DFA;
 import util.NFA;
 import exception.IncorrectRuleFormatException;
@@ -50,9 +46,6 @@ public class InterpreterLL1 {
 	// DON'T access these directly: instead, use assignStringList / assignInteger, etc.
 	private Map<String, List<StringMatch>> stringListVars;
 	private Map<String, Integer> intVars;
-
-	private String g_src_filename = null; // added for printExpList
-
 
 	private static String MINI_RE_PROGRAM = "<MiniRE-program>"; 
 	private static String STATEMENT_LIST = "<statement-list>";
@@ -620,7 +613,7 @@ public class InterpreterLL1 {
 					List<StringMatch> strMList = getStringList(id);
 
 					for(int i=0; i<strMList.size(); i++) { 
-						System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString() + " // Filename: " + g_src_filename);
+						System.out.println("ID: " + id + " // Index: " + i + " // StringMatch Value: " + strMList.get(i).toString());
 					}					
 				} else { 
 					throw new RuntimeException("Error: ID does not exist.");
@@ -637,7 +630,8 @@ public class InterpreterLL1 {
 				if(node != null)
 					if(node.getValue().equals(EXP)) // only passes <exp> children to save time
 						printExpList(node);
-		}	
+		}
+				
 	}
 
 	private static boolean isStringListAssignment(LL1AST statementNode) {

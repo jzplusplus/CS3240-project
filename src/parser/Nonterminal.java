@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Nonterminal {
 
-	private static final String EPSILON = "epsilon";
+	private static final String EPSILON = "<epsilon>";
 
 	private String value;
 	private ArrayList<String> first;

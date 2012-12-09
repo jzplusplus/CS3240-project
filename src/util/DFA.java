@@ -201,7 +201,7 @@ public class DFA {
 				}
 			}
 		}
-
+/*
 		StringBuilder sb = new StringBuilder();
 		for (State s : transitionTable.keySet()) {
 			sb.append(s.getName() + " { ");
@@ -210,7 +210,8 @@ public class DFA {
 			}
 			sb.append(" }\n");
 		}
-		System.out.println(sb.toString());
+		System.out.println(sb.toString());		
+*/
 	}
 
 
@@ -436,7 +437,7 @@ public class DFA {
 	}
 
 	
-
+/*
 	public static void main(String[] args) throws ParseException, IOException {
 
 		ParseTree t = RegexParser.parse("([a-zA-Z])*ment([a-zA-Z])*", new HashMap());
@@ -446,8 +447,8 @@ public class DFA {
 		System.out.println(n);
 
 		DFA dfa4 = new DFA(n, n.getStartState());
-		System.out.println(dfa4);
+		// System.out.println(dfa4);
 
 	}
-
+*/
 } // end class DFA
