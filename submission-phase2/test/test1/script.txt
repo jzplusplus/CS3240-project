@@ -1,0 +1,3 @@
+begin
+replace '[0-9]'with "REPLACED" in "longer_file.txt" >! "long_output.txt";   
+end
