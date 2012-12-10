@@ -1,0 +1,11 @@
+begin
+matches = find '[A-Z]([a-z])+([0-9])*' in "input1.txt" inters find '[A-Z]([a-z])+([0-9])*' in "input2.txt";
+n_matches = #matches;
+print (n_matches);
+matches = find '([a-z])+([0-9])*' in "input2.txt" union find '[A-Z]([a-z])*' in "input2.txt";
+n_matches = #matches;
+print (n_matches);
+matches = find '[A-Z]([a-z])+([0-9])*' in "input1.txt" diff find '[A-Z]([0-9])*' in "input1.txt";
+n_matches = #matches;
+print (n_matches);
+end
