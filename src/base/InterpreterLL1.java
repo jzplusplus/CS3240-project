@@ -267,8 +267,11 @@ public class InterpreterLL1 {
 	}
 
 	private void copy(File source, String destName) throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(prefix+source));
-		BufferedWriter writer = new BufferedWriter(new FileWriter(prefix+destName));
+		if(!source.getPath().startsWith("/var")) source = new File(prefix+source.getPath());
+		
+		BufferedReader reader = new BufferedReader(new FileReader(source));
+		if(!destName.startsWith("/var")) destName = prefix+destName;
+		BufferedWriter writer = new BufferedWriter(new FileWriter(destName));
 		String line = reader.readLine();
 		writer.write(line);
 		while ((line = reader.readLine()) != null) {
@@ -462,8 +465,8 @@ public class InterpreterLL1 {
 
 	private List<StringMatch> find(DFA regex, String filename) {
 		try {
-
-			LineNumberReader fileReader = new LineNumberReader(new FileReader(prefix + filename));
+			if(!filename.startsWith("/var")) filename = prefix+filename;
+			LineNumberReader fileReader = new LineNumberReader(new FileReader(filename));
 			List<StringMatch> matches = new ArrayList<StringMatch>();
 			String line;
 			while ((line = fileReader.readLine()) != null) {

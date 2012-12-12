@@ -1,0 +1,3 @@
+begin
+recursivereplace 'oo' with "o" in "input1.txt" >! "output1.txt";
+end
